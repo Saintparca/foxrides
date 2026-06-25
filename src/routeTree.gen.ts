@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
+import { Route as AuthenticatedDriverPaymentRouteImport } from './routes/_authenticated/driver-payment'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 
@@ -53,6 +54,12 @@ const AuthenticatedEarningsRoute = AuthenticatedEarningsRouteImport.update({
   path: '/earnings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDriverPaymentRoute =
+  AuthenticatedDriverPaymentRouteImport.update({
+    id: '/driver-payment',
+    path: '/driver-payment',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRoute
+  '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
 }
@@ -81,6 +89,7 @@ export interface FileRoutesByTo {
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRoute
+  '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
 }
@@ -93,6 +102,7 @@ export interface FileRoutesById {
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
 }
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/driver-onboarding'
     | '/admin'
     | '/app'
+    | '/driver-payment'
     | '/earnings'
     | '/history'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/driver-onboarding'
     | '/admin'
     | '/app'
+    | '/driver-payment'
     | '/earnings'
     | '/history'
   id:
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
     | '/driver-onboarding'
     | '/_authenticated/admin'
     | '/_authenticated/app'
+    | '/_authenticated/driver-payment'
     | '/_authenticated/earnings'
     | '/_authenticated/history'
   fileRoutesById: FileRoutesById
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEarningsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/driver-payment': {
+      id: '/_authenticated/driver-payment'
+      path: '/driver-payment'
+      fullPath: '/driver-payment'
+      preLoaderRoute: typeof AuthenticatedDriverPaymentRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
@@ -209,6 +229,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedDriverPaymentRoute: typeof AuthenticatedDriverPaymentRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
 }
@@ -216,6 +237,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedDriverPaymentRoute: AuthenticatedDriverPaymentRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
 }
@@ -233,13 +255,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

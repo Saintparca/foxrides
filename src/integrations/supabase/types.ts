@@ -16,33 +16,45 @@ export type Database = {
     Tables: {
       drivers: {
         Row: {
+          activation_paid: boolean
+          country: string
           created_at: string
           id: string
           is_approved: boolean
           is_available: boolean
+          last_weekly_payment_at: string | null
           license_number: string
+          profile_pic_url: string | null
           vehicle_make: string
           vehicle_model: string
           vehicle_plate: string
           vehicle_year: number | null
         }
         Insert: {
+          activation_paid?: boolean
+          country?: string
           created_at?: string
           id: string
           is_approved?: boolean
           is_available?: boolean
+          last_weekly_payment_at?: string | null
           license_number: string
+          profile_pic_url?: string | null
           vehicle_make: string
           vehicle_model: string
           vehicle_plate: string
           vehicle_year?: number | null
         }
         Update: {
+          activation_paid?: boolean
+          country?: string
           created_at?: string
           id?: string
           is_approved?: boolean
           is_available?: boolean
+          last_weekly_payment_at?: string | null
           license_number?: string
+          profile_pic_url?: string | null
           vehicle_make?: string
           vehicle_model?: string
           vehicle_plate?: string
@@ -82,12 +94,16 @@ export type Database = {
           completed_at: string | null
           created_at: string
           customer_id: string
+          dest_lat: number | null
+          dest_lng: number | null
           destination_address: string
           distance_km: number
           driver_id: string | null
           fare: number
           id: string
           pickup_address: string
+          pickup_lat: number | null
+          pickup_lng: number | null
           rating: number | null
           rating_comment: string | null
           status: Database["public"]["Enums"]["ride_status"]
@@ -96,12 +112,16 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id: string
+          dest_lat?: number | null
+          dest_lng?: number | null
           destination_address: string
           distance_km: number
           driver_id?: string | null
           fare: number
           id?: string
           pickup_address: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
@@ -110,12 +130,16 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           customer_id?: string
+          dest_lat?: number | null
+          dest_lng?: number | null
           destination_address?: string
           distance_km?: number
           driver_id?: string | null
           fare?: number
           id?: string
           pickup_address?: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
           status?: Database["public"]["Enums"]["ride_status"]

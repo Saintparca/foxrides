@@ -52,7 +52,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Fox Rides — Fast, friendly rides" },
       { name: "description", content: "Book rides, drive and earn with Fox Rides." },
-      { name: "theme-color", content: "#f08a3c" },
+      { name: "theme-color", content: "#1e3a8a" },
       { property: "og:title", content: "Fox Rides" },
       { property: "og:description", content: "Fast, friendly rides. Book in seconds." },
       { property: "og:type", content: "website" },
