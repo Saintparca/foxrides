@@ -1,13 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { estimateDistanceKm, estimateFare, fmtMoney } from "@/lib/fare";
+import { estimateFare, fmtMoney, haversineKm } from "@/lib/fare";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { MapPin, Navigation, Car, Star, Clock } from "lucide-react";
+import { MapPin, Navigation, Car, Star, Clock, MessageCircle } from "lucide-react";
+import { PlaceAutocomplete, type PlacePick } from "@/components/PlaceAutocomplete";
+import { RouteMap } from "@/components/RouteMap";
+import { OWNER_WHATSAPP_LOCAL, waLink } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppHome,
@@ -19,13 +21,19 @@ function AppHome() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-black tracking-tight">
-          {isDriver ? "Ready to drive" : "Where to?"}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {isDriver ? "Toggle availability and pick up nearby rides." : "Book in seconds — fare estimated upfront."}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">
+            {isDriver ? "Ready to drive" : "Where to?"}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {isDriver ? "Toggle availability and pick up nearby rides." : "Book in seconds — fare in Pula, upfront."}
+          </p>
+        </div>
+        <a href={waLink("Hi Fox Rides, I need help.")} target="_blank" rel="noreferrer"
+           className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-2 text-xs font-bold text-white">
+          <MessageCircle className="h-3.5 w-3.5" /> {OWNER_WHATSAPP_LOCAL}
+        </a>
       </div>
 
       {isDriver ? <DriverPanel userId={user!.id} /> : <BookingPanel userId={user!.id} />}
@@ -34,43 +42,77 @@ function AppHome() {
 }
 
 function BookingPanel({ userId }: { userId: string }) {
-  const [pickup, setPickup] = useState("");
-  const [dest, setDest] = useState("");
+  const [pickup, setPickup] = useState<PlacePick | null>(null);
+  const [dest, setDest] = useState<PlacePick | null>(null);
+  const [pickupText, setPickupText] = useState("");
+  const [destText, setDestText] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const km = useMemo(() => (pickup && dest ? estimateDistanceKm(pickup, dest) : 0), [pickup, dest]);
+  // Try to fill pickup with the user's current location
+  useEffect(() => {
+    if (pickup || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const p = { address: "Current location", lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setPickup(p);
+        setPickupText(p.address);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, []);
+
+  const km = useMemo(
+    () => (pickup && dest ? haversineKm(pickup, dest) : 0),
+    [pickup?.lat, pickup?.lng, dest?.lat, dest?.lng]
+  );
   const fare = useMemo(() => (km ? estimateFare(km) : 0), [km]);
 
   const book = async () => {
-    if (!pickup.trim() || !dest.trim()) { toast.error("Enter pickup and destination"); return; }
+    if (!pickup || !dest) { toast.error("Pick both pickup and destination"); return; }
     setBusy(true);
     const { error } = await supabase.from("rides").insert({
-      customer_id: userId, pickup_address: pickup.trim(), destination_address: dest.trim(),
+      customer_id: userId,
+      pickup_address: pickup.address,
+      destination_address: dest.address,
+      pickup_lat: pickup.lat, pickup_lng: pickup.lng,
+      dest_lat: dest.lat, dest_lng: dest.lng,
       distance_km: km, fare, status: "requested",
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Ride requested! A driver will accept shortly.");
-    setPickup(""); setDest("");
   };
 
   return (
     <div className="space-y-5">
+      <RouteMap pickup={pickup} destination={dest} />
+
       <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><MapPin className="h-4 w-4" /></div>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-fox text-fox-foreground"><MapPin className="h-4 w-4" /></div>
             <div className="flex-1 min-w-0">
               <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pickup</Label>
-              <Input value={pickup} onChange={(e) => setPickup(e.target.value)} placeholder="Current location" className="h-9 border-0 px-0 text-base focus-visible:ring-0" maxLength={200} />
+              <PlaceAutocomplete
+                value={pickupText}
+                placeholder="Current location"
+                onTextChange={setPickupText}
+                onPick={(p) => { setPickup(p); setPickupText(p.address); }}
+              />
             </div>
           </div>
           <div className="ml-4 h-4 w-px bg-border" />
           <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-foreground text-background"><Navigation className="h-4 w-4" /></div>
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Navigation className="h-4 w-4" /></div>
             <div className="flex-1 min-w-0">
               <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Destination</Label>
-              <Input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Where to?" className="h-9 border-0 px-0 text-base focus-visible:ring-0" maxLength={200} />
+              <PlaceAutocomplete
+                value={destText}
+                placeholder="Where to?"
+                onTextChange={setDestText}
+                onPick={(p) => { setDest(p); setDestText(p.address); }}
+              />
             </div>
           </div>
         </div>
@@ -81,9 +123,9 @@ function BookingPanel({ userId }: { userId: string }) {
           <div>
             <div className="text-xs uppercase tracking-wider text-background/60">Estimated fare</div>
             <div className="mt-1 text-4xl font-black">{fare ? fmtMoney(fare) : "—"}</div>
-            <div className="mt-1 text-xs text-background/60">{km ? `${km} km · ${Math.max(3, Math.round(km * 2))} min` : "Enter route to estimate"}</div>
+            <div className="mt-1 text-xs text-background/60">{km ? `${km} km · ${Math.max(3, Math.round(km * 2))} min` : "Pick a destination to estimate"}</div>
           </div>
-          <div className="grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-fox)]"><Car className="h-6 w-6" /></div>
+          <div className="grid h-14 w-14 place-items-center rounded-full bg-fox text-fox-foreground shadow-[var(--shadow-fox)]"><Car className="h-6 w-6" /></div>
         </div>
       </div>
 
@@ -91,33 +133,41 @@ function BookingPanel({ userId }: { userId: string }) {
         {busy ? "Requesting…" : "Request Fox"}
       </Button>
 
-      <Link to="/app/history" className="block text-center text-sm font-semibold text-primary hover:underline">View ride history →</Link>
+      <Link to="/history" className="block text-center text-sm font-semibold text-primary hover:underline">View ride history →</Link>
     </div>
   );
 }
 
 function DriverPanel({ userId }: { userId: string }) {
-  const [available, setAvailable] = useState(false);
+  const navigate = useNavigate();
+  const [driver, setDriver] = useState<any>(null);
   const [pending, setPending] = useState<any[]>([]);
+  const [selected, setSelected] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
   const load = async () => {
-    const { data: d } = await supabase.from("drivers").select("is_available, is_approved").eq("id", userId).maybeSingle();
+    const { data: d } = await supabase.from("drivers").select("*").eq("id", userId).maybeSingle();
     if (!d) { setHasProfile(false); return; }
-    setHasProfile(true);
-    setAvailable(d.is_available);
+    setHasProfile(true); setDriver(d);
     const { data: rides } = await supabase.from("rides").select("*").eq("status", "requested").order("created_at", { ascending: false }).limit(20);
     setPending(rides ?? []);
   };
   useEffect(() => { load(); }, []);
 
+  const weeklyDue = (() => {
+    if (!driver?.last_weekly_payment_at) return true;
+    return Date.now() - new Date(driver.last_weekly_payment_at).getTime() > 7 * 24 * 60 * 60 * 1000;
+  })();
+  const canGoOnline = driver?.activation_paid && !weeklyDue;
+
   const toggleAvail = async (next: boolean) => {
+    if (next && !canGoOnline) { navigate({ to: "/driver-payment" as any }); return; }
     setBusy(true);
     const { error } = await supabase.from("drivers").update({ is_available: next }).eq("id", userId);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    setAvailable(next);
+    setDriver({ ...driver, is_available: next });
     toast.success(next ? "You're online" : "You're offline");
   };
 
@@ -139,16 +189,39 @@ function DriverPanel({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-5">
+      {!canGoOnline && (
+        <div className="rounded-2xl border border-fox/40 bg-fox/10 p-4">
+          <div className="text-sm font-bold">Payment required</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {!driver?.activation_paid ? "Pay P100 activation fee" : "Weekly P50 fee is due"} to go online.
+          </div>
+          <Link to="/driver-payment" className="mt-3 inline-block rounded-full bg-fox px-4 py-2 text-xs font-bold text-fox-foreground">
+            Pay now
+          </Link>
+        </div>
+      )}
+
       <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div>
-          <div className="text-sm font-bold">{available ? "You're online" : "You're offline"}</div>
-          <div className="text-xs text-muted-foreground">{available ? "Receiving ride requests" : "Tap to go online"}</div>
+          <div className="text-sm font-bold">{driver?.is_available ? "You're online" : "You're offline"}</div>
+          <div className="text-xs text-muted-foreground">{driver?.is_available ? "Receiving ride requests" : "Tap to go online"}</div>
         </div>
-        <button onClick={() => toggleAvail(!available)} disabled={busy}
-          className={`relative h-7 w-12 rounded-full transition ${available ? "bg-primary" : "bg-muted"}`}>
-          <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-background shadow transition ${available ? "left-[22px]" : "left-0.5"}`} />
+        <button onClick={() => toggleAvail(!driver?.is_available)} disabled={busy}
+          className={`relative h-7 w-12 rounded-full transition ${driver?.is_available ? "bg-primary" : "bg-muted"}`}>
+          <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-background shadow transition ${driver?.is_available ? "left-[22px]" : "left-0.5"}`} />
         </button>
       </div>
+
+      {/* Map preview of selected request */}
+      {selected && (
+        <div>
+          <RouteMap
+            pickup={selected.pickup_lat ? { lat: Number(selected.pickup_lat), lng: Number(selected.pickup_lng) } : null}
+            destination={selected.dest_lat ? { lat: Number(selected.dest_lat), lng: Number(selected.dest_lng) } : null}
+            height={200}
+          />
+        </div>
+      )}
 
       <div>
         <h2 className="mb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">Open requests</h2>
@@ -159,17 +232,20 @@ function DriverPanel({ userId }: { userId: string }) {
         ) : (
           <div className="space-y-3">
             {pending.map((r) => (
-              <div key={r.id} className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+              <div key={r.id}
+                   onClick={() => setSelected(r)}
+                   className={`cursor-pointer rounded-2xl border bg-card p-4 shadow-[var(--shadow-card)] ${selected?.id === r.id ? "border-primary" : "border-border"}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-primary" /><span className="truncate">{r.pickup_address}</span></div>
-                    <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-foreground" /><span className="truncate">{r.destination_address}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-fox" /><span className="truncate">{r.pickup_address}</span></div>
+                    <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-primary" /><span className="truncate">{r.destination_address}</span></div>
                     <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{r.distance_km} km</span>
                       <span className="flex items-center gap-1"><Star className="h-3 w-3" />{fmtMoney(Number(r.fare))}</span>
                     </div>
                   </div>
-                  <Button onClick={() => accept(r.id)} className="rounded-full text-xs font-bold">Accept</Button>
+                  <Button onClick={(e) => { e.stopPropagation(); accept(r.id); }} disabled={!canGoOnline}
+                          className="rounded-full text-xs font-bold">Accept</Button>
                 </div>
               </div>
             ))}
