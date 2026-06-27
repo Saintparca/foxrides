@@ -19,6 +19,7 @@ import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedDriverPaymentRouteImport } from './routes/_authenticated/driver-payment'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 
 const DriverOnboardingRoute = DriverOnboardingRouteImport.update({
   id: '/driver-onboarding',
@@ -70,28 +71,34 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
   '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
-  '/admin': typeof AuthenticatedAdminRoute
   '/app': typeof AuthenticatedAppRoute
   '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,11 +107,12 @@ export interface FileRoutesById {
   '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/_authenticated/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -118,17 +126,18 @@ export interface FileRouteTypes {
     | '/driver-payment'
     | '/earnings'
     | '/history'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin-info'
     | '/auth'
     | '/driver-onboarding'
-    | '/admin'
     | '/app'
     | '/driver-payment'
     | '/earnings'
     | '/history'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/driver-payment'
     | '/_authenticated/earnings'
     | '/_authenticated/history'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -223,11 +233,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
   AuthenticatedDriverPaymentRoute: typeof AuthenticatedDriverPaymentRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
@@ -235,7 +263,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
   AuthenticatedDriverPaymentRoute: AuthenticatedDriverPaymentRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
