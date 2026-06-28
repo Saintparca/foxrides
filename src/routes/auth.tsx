@@ -29,10 +29,37 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [showResend, setShowResend] = useState(false);
+
+  const resendVerification = async () => {
+    const parsedEmail = z.string().trim().email().safeParse(email);
+    if (!parsedEmail.success) {
+      toast.error("Enter your registered email first.");
+      return;
+    }
+
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: parsedEmail.data,
+        options: { emailRedirectTo: `${window.location.origin}/app` },
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Verification email sent. Check your inbox.");
+    } finally {
+      setResending(false);
+    }
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
+    setShowResend(false);
     try {
       if (tab === "signup") {
         const parse = z.object({
@@ -56,7 +83,14 @@ function AuthPage() {
         else navigate({ to: "/app" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) { toast.error(error.message); return; }
+        if (error) {
+          const message = error.message.toLowerCase();
+          if (message.includes("confirm") || message.includes("verify") || message.includes("invalid login credentials")) {
+            setShowResend(true);
+          }
+          toast.error(error.message);
+          return;
+        }
         toast.success("Signed in");
         navigate({ to: "/app" });
       }
@@ -113,6 +147,22 @@ function AuthPage() {
           <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base font-bold">
             {busy ? "Please wait…" : tab === "signin" ? "Sign in" : "Create account"}
           </Button>
+
+          {tab === "signin" && showResend && (
+            <div className="rounded-2xl border border-border bg-muted/50 p-4 text-sm">
+              <p className="font-semibold">Account not verified?</p>
+              <p className="mt-1 text-muted-foreground">Send a new verification link to your registered email.</p>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={resending}
+                onClick={resendVerification}
+                className="mt-3 h-10 w-full rounded-full font-bold"
+              >
+                {resending ? "Sending…" : "Resend verification"}
+              </Button>
+            </div>
+          )}
         </form>
 
         <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">
