@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      driver_locations: {
+        Row: {
+          driver_id: string
+          heading: number | null
+          lat: number
+          lng: number
+          updated_at: string
+        }
+        Insert: {
+          driver_id: string
+          heading?: number | null
+          lat: number
+          lng: number
+          updated_at?: string
+        }
+        Update: {
+          driver_id?: string
+          heading?: number | null
+          lat?: number
+          lng?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           activation_paid: boolean
@@ -94,6 +118,8 @@ export type Database = {
       }
       rides: {
         Row: {
+          cancellation_fee: number
+          cancelled_by: string | null
           completed_at: string | null
           created_at: string
           customer_id: string
@@ -102,6 +128,11 @@ export type Database = {
           destination_address: string
           distance_km: number
           driver_id: string | null
+          driver_lat: number | null
+          driver_lng: number | null
+          driver_loc_updated_at: string | null
+          duration_min: number | null
+          eta_at: string | null
           fare: number
           id: string
           pickup_address: string
@@ -109,9 +140,12 @@ export type Database = {
           pickup_lng: number | null
           rating: number | null
           rating_comment: string | null
+          route_polyline: string | null
           status: Database["public"]["Enums"]["ride_status"]
         }
         Insert: {
+          cancellation_fee?: number
+          cancelled_by?: string | null
           completed_at?: string | null
           created_at?: string
           customer_id: string
@@ -120,6 +154,11 @@ export type Database = {
           destination_address: string
           distance_km: number
           driver_id?: string | null
+          driver_lat?: number | null
+          driver_lng?: number | null
+          driver_loc_updated_at?: string | null
+          duration_min?: number | null
+          eta_at?: string | null
           fare: number
           id?: string
           pickup_address: string
@@ -127,9 +166,12 @@ export type Database = {
           pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
+          route_polyline?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
         }
         Update: {
+          cancellation_fee?: number
+          cancelled_by?: string | null
           completed_at?: string | null
           created_at?: string
           customer_id?: string
@@ -138,6 +180,11 @@ export type Database = {
           destination_address?: string
           distance_km?: number
           driver_id?: string | null
+          driver_lat?: number | null
+          driver_lng?: number | null
+          driver_loc_updated_at?: string | null
+          duration_min?: number | null
+          eta_at?: string | null
           fare?: number
           id?: string
           pickup_address?: string
@@ -145,6 +192,7 @@ export type Database = {
           pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
+          route_polyline?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
         }
         Relationships: []
