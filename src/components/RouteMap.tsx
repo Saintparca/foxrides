@@ -1,21 +1,27 @@
 import { useEffect, useRef } from "react";
 import { BW_CENTER, loadGoogleMaps } from "@/lib/maps";
+import { decodePolyline } from "@/lib/fare";
 
 interface Pt { lat: number; lng: number }
 
 export function RouteMap({
   pickup,
   destination,
+  driver,
+  polyline,
   height = 220,
 }: {
   pickup?: Pt | null;
   destination?: Pt | null;
+  driver?: Pt | null;
+  polyline?: string | null;
   height?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const lineRef = useRef<any>(null);
+  const driverRef = useRef<any>(null);
 
   useEffect(() => {
     let alive = true;
@@ -27,9 +33,7 @@ export function RouteMap({
         disableDefaultUI: true,
         zoomControl: true,
         gestureHandling: "greedy",
-        styles: [
-          { featureType: "poi", stylers: [{ visibility: "off" }] },
-        ],
+        styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
       });
       draw();
     }).catch(() => {});
@@ -37,7 +41,8 @@ export function RouteMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { draw(); }, [pickup?.lat, pickup?.lng, destination?.lat, destination?.lng]);
+  useEffect(() => { draw(); }, [pickup?.lat, pickup?.lng, destination?.lat, destination?.lng, polyline]);
+  useEffect(() => { drawDriver(); }, [driver?.lat, driver?.lng]);
 
   const draw = () => {
     const g = (window as any).google;
@@ -47,31 +52,45 @@ export function RouteMap({
     markersRef.current = [];
     if (lineRef.current) { lineRef.current.setMap(null); lineRef.current = null; }
 
-    const pts: Pt[] = [];
     if (pickup) {
-      pts.push(pickup);
       markersRef.current.push(new g.maps.Marker({
         position: pickup, map,
         icon: { path: g.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#f08a3c", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
       }));
     }
     if (destination) {
-      pts.push(destination);
       markersRef.current.push(new g.maps.Marker({
         position: destination, map,
-        icon: { path: g.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#1e3a8a", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+        icon: { path: g.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#000", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
       }));
     }
-    if (pts.length === 2) {
+
+    const path = polyline ? decodePolyline(polyline) : (pickup && destination ? [pickup, destination] : []);
+    if (path.length >= 2) {
       lineRef.current = new g.maps.Polyline({
-        path: pts, map, strokeColor: "#1e3a8a", strokeOpacity: 0.85, strokeWeight: 4,
+        path, map, strokeColor: "#f08a3c", strokeOpacity: 0.95, strokeWeight: 5,
       });
       const b = new g.maps.LatLngBounds();
-      pts.forEach((p) => b.extend(p));
+      path.forEach((p) => b.extend(p));
       map.fitBounds(b, 60);
-    } else if (pts.length === 1) {
-      map.setCenter(pts[0]);
+    } else if (pickup || destination) {
+      map.setCenter((pickup || destination)!);
       map.setZoom(14);
+    }
+  };
+
+  const drawDriver = () => {
+    const g = (window as any).google;
+    const map = mapRef.current;
+    if (!g || !map) return;
+    if (!driver) { if (driverRef.current) { driverRef.current.setMap(null); driverRef.current = null; } return; }
+    if (!driverRef.current) {
+      driverRef.current = new g.maps.Marker({
+        position: driver, map,
+        icon: { path: "M-8,-4 L8,-4 L10,0 L8,4 L-8,4 L-10,0 Z", scale: 1.4, fillColor: "#f08a3c", fillOpacity: 1, strokeColor: "#000", strokeWeight: 2, rotation: 0 },
+      });
+    } else {
+      driverRef.current.setPosition(driver);
     }
   };
 

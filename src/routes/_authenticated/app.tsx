@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { estimateFare, fmtMoney, haversineKm } from "@/lib/fare";
+import { computeRoute } from "@/lib/routes.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -27,7 +29,7 @@ function AppHome() {
             {isDriver ? "Ready to drive" : "Where to?"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isDriver ? "Toggle availability and pick up nearby rides." : "Book in seconds — fare in Pula, upfront."}
+            {isDriver ? "Toggle availability and pick up nearby rides." : "Real road routes · live fare in Pula."}
           </p>
         </div>
         <a href={waLink("Hi Fox Rides, I need help.")} target="_blank" rel="noreferrer"
@@ -47,6 +49,10 @@ function BookingPanel({ userId }: { userId: string }) {
   const [pickupText, setPickupText] = useState("");
   const [destText, setDestText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [route, setRoute] = useState<{ km: number; min: number; polyline: string } | null>(null);
+  const [routing, setRouting] = useState(false);
+  const compute = useServerFn(computeRoute);
+  const seq = useRef(0);
 
   // Try to fill pickup with the user's current location
   useEffect(() => {
@@ -62,15 +68,35 @@ function BookingPanel({ userId }: { userId: string }) {
     );
   }, []);
 
-  const km = useMemo(
-    () => (pickup && dest ? haversineKm(pickup, dest) : 0),
-    [pickup?.lat, pickup?.lng, dest?.lat, dest?.lng]
-  );
-  const fare = useMemo(() => (km ? estimateFare(km) : 0), [km]);
+  // Compute real road route whenever both endpoints set
+  useEffect(() => {
+    if (!pickup || !dest) { setRoute(null); return; }
+    const n = ++seq.current;
+    setRouting(true);
+    compute({ data: { origin: { lat: pickup.lat, lng: pickup.lng }, destination: { lat: dest.lat, lng: dest.lng } } })
+      .then((r) => {
+        if (n !== seq.current) return;
+        if (r.ok) setRoute({ km: r.distanceKm, min: r.durationMin, polyline: r.polyline });
+        else {
+          const km = haversineKm(pickup, dest);
+          setRoute({ km, min: Math.max(3, Math.round(km * 2)), polyline: "" });
+        }
+      })
+      .catch(() => {
+        const km = haversineKm(pickup, dest);
+        setRoute({ km, min: Math.max(3, Math.round(km * 2)), polyline: "" });
+      })
+      .finally(() => { if (n === seq.current) setRouting(false); });
+  }, [pickup?.lat, pickup?.lng, dest?.lat, dest?.lng]);
+
+  const km = route?.km ?? 0;
+  const min = route?.min ?? 0;
+  const fare = km ? estimateFare(km, min) : 0;
 
   const book = async () => {
-    if (!pickup || !dest) { toast.error("Pick both pickup and destination"); return; }
+    if (!pickup || !dest || !route) { toast.error("Pick both pickup and destination"); return; }
     setBusy(true);
+    const eta = new Date(Date.now() + min * 60 * 1000).toISOString();
     const { error } = await supabase.from("rides").insert({
       customer_id: userId,
       pickup_address: pickup.address,
@@ -78,6 +104,9 @@ function BookingPanel({ userId }: { userId: string }) {
       pickup_lat: pickup.lat, pickup_lng: pickup.lng,
       dest_lat: dest.lat, dest_lng: dest.lng,
       distance_km: km, fare, status: "requested",
+      route_polyline: route.polyline || null,
+      duration_min: min,
+      eta_at: eta,
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -86,7 +115,7 @@ function BookingPanel({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-5">
-      <RouteMap pickup={pickup} destination={dest} />
+      <RouteMap pickup={pickup} destination={dest} polyline={route?.polyline ?? null} />
 
       <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div className="space-y-3">
@@ -123,13 +152,15 @@ function BookingPanel({ userId }: { userId: string }) {
           <div>
             <div className="text-xs uppercase tracking-wider text-background/60">Estimated fare</div>
             <div className="mt-1 text-4xl font-black">{fare ? fmtMoney(fare) : "—"}</div>
-            <div className="mt-1 text-xs text-background/60">{km ? `${km} km · ${Math.max(3, Math.round(km * 2))} min` : "Pick a destination to estimate"}</div>
+            <div className="mt-1 text-xs text-background/60">
+              {routing ? "Calculating route…" : km ? `${km} km · ${min} min` : "Pick a destination to estimate"}
+            </div>
           </div>
           <div className="grid h-14 w-14 place-items-center rounded-full bg-fox text-fox-foreground shadow-[var(--shadow-fox)]"><Car className="h-6 w-6" /></div>
         </div>
       </div>
 
-      <Button onClick={book} disabled={busy || !pickup || !dest} className="h-14 w-full rounded-full text-base font-bold shadow-[var(--shadow-fox)]">
+      <Button onClick={book} disabled={busy || !pickup || !dest || !route} className="h-14 w-full rounded-full text-base font-bold shadow-[var(--shadow-fox)]">
         {busy ? "Requesting…" : "Request Fox"}
       </Button>
 
@@ -145,6 +176,9 @@ function DriverPanel({ userId }: { userId: string }) {
   const [selected, setSelected] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<{ polyline: string } | null>(null);
+  const compute = useServerFn(computeRoute);
+  const watchRef = useRef<number | null>(null);
 
   const load = async () => {
     const { data: d } = await supabase.from("drivers").select("*").eq("id", userId).maybeSingle();
@@ -154,6 +188,41 @@ function DriverPanel({ userId }: { userId: string }) {
     setPending(rides ?? []);
   };
   useEffect(() => { load(); }, []);
+
+  // Compute polyline for the selected request
+  useEffect(() => {
+    setSelectedRoute(null);
+    if (!selected?.pickup_lat || !selected?.dest_lat) return;
+    compute({ data: {
+      origin: { lat: Number(selected.pickup_lat), lng: Number(selected.pickup_lng) },
+      destination: { lat: Number(selected.dest_lat), lng: Number(selected.dest_lng) },
+    } }).then((r) => { if (r.ok) setSelectedRoute({ polyline: r.polyline }); }).catch(() => {});
+  }, [selected?.id]);
+
+  // Stream driver GPS to driver_locations while online
+  useEffect(() => {
+    if (!driver?.is_available) {
+      if (watchRef.current !== null) { navigator.geolocation.clearWatch(watchRef.current); watchRef.current = null; }
+      return;
+    }
+    if (!navigator.geolocation) return;
+    watchRef.current = navigator.geolocation.watchPosition(
+      async (pos) => {
+        await supabase.from("driver_locations").upsert({
+          driver_id: userId,
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          heading: pos.coords.heading ?? null,
+          updated_at: new Date().toISOString(),
+        });
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+    return () => {
+      if (watchRef.current !== null) { navigator.geolocation.clearWatch(watchRef.current); watchRef.current = null; }
+    };
+  }, [driver?.is_available, userId]);
 
   const weeklyDue = (() => {
     if (!driver?.last_weekly_payment_at) return true;
@@ -204,7 +273,7 @@ function DriverPanel({ userId }: { userId: string }) {
       <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
         <div>
           <div className="text-sm font-bold">{driver?.is_available ? "You're online" : "You're offline"}</div>
-          <div className="text-xs text-muted-foreground">{driver?.is_available ? "Receiving ride requests" : "Tap to go online"}</div>
+          <div className="text-xs text-muted-foreground">{driver?.is_available ? "Sharing live location · receiving requests" : "Tap to go online"}</div>
         </div>
         <button onClick={() => toggleAvail(!driver?.is_available)} disabled={busy}
           className={`relative h-7 w-12 rounded-full transition ${driver?.is_available ? "bg-primary" : "bg-muted"}`}>
@@ -212,12 +281,12 @@ function DriverPanel({ userId }: { userId: string }) {
         </button>
       </div>
 
-      {/* Map preview of selected request */}
       {selected && (
         <div>
           <RouteMap
             pickup={selected.pickup_lat ? { lat: Number(selected.pickup_lat), lng: Number(selected.pickup_lng) } : null}
             destination={selected.dest_lat ? { lat: Number(selected.dest_lat), lng: Number(selected.dest_lng) } : null}
+            polyline={selectedRoute?.polyline ?? selected.route_polyline ?? null}
             height={200}
           />
         </div>
@@ -240,7 +309,7 @@ function DriverPanel({ userId }: { userId: string }) {
                     <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-fox" /><span className="truncate">{r.pickup_address}</span></div>
                     <div className="flex items-center gap-2 text-sm"><span className="h-2 w-2 rounded-full bg-primary" /><span className="truncate">{r.destination_address}</span></div>
                     <div className="flex items-center gap-3 pt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{r.distance_km} km</span>
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{r.distance_km} km{r.duration_min ? ` · ${r.duration_min} min` : ""}</span>
                       <span className="flex items-center gap-1"><Star className="h-3 w-3" />{fmtMoney(Number(r.fare))}</span>
                     </div>
                   </div>
