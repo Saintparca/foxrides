@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminInfoRouteImport } from './routes/admin-info'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSavedPlacesRouteImport } from './routes/_authenticated/saved-places'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
 import { Route as AuthenticatedEarningsRouteImport } from './routes/_authenticated/earnings'
 import { Route as AuthenticatedDriverPaymentRouteImport } from './routes/_authenticated/driver-payment'
@@ -46,6 +47,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSavedPlacesRoute =
+  AuthenticatedSavedPlacesRouteImport.update({
+    id: '/saved-places',
+    path: '/saved-places',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/saved-places': typeof AuthenticatedSavedPlacesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -105,6 +113,7 @@ export interface FileRoutesByTo {
   '/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
+  '/saved-places': typeof AuthenticatedSavedPlacesRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -120,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/driver-payment': typeof AuthenticatedDriverPaymentRoute
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/saved-places': typeof AuthenticatedSavedPlacesRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/driver-payment'
     | '/earnings'
     | '/history'
+    | '/saved-places'
     | '/admin/users'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/driver-payment'
     | '/earnings'
     | '/history'
+    | '/saved-places'
     | '/admin/users'
     | '/admin'
   id:
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authenticated/driver-payment'
     | '/_authenticated/earnings'
     | '/_authenticated/history'
+    | '/_authenticated/saved-places'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -209,6 +222,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/saved-places': {
+      id: '/_authenticated/saved-places'
+      path: '/saved-places'
+      fullPath: '/saved-places'
+      preLoaderRoute: typeof AuthenticatedSavedPlacesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/history': {
       id: '/_authenticated/history'
@@ -281,6 +301,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDriverPaymentRoute: typeof AuthenticatedDriverPaymentRoute
   AuthenticatedEarningsRoute: typeof AuthenticatedEarningsRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedSavedPlacesRoute: typeof AuthenticatedSavedPlacesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -289,6 +310,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDriverPaymentRoute: AuthenticatedDriverPaymentRoute,
   AuthenticatedEarningsRoute: AuthenticatedEarningsRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedSavedPlacesRoute: AuthenticatedSavedPlacesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
