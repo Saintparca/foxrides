@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { fmtMoney } from "@/lib/fare";
+import { fmtMoney, CANCEL_FEE } from "@/lib/fare";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Star, MapPin, Navigation, CheckCircle2 } from "lucide-react";
 
@@ -43,20 +44,30 @@ function History() {
 
 function RideCard({ ride, isDriver, reload }: { ride: any; isDriver: boolean; reload: () => void }) {
   const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
 
   const advance = async (status: string) => {
     setBusy(true);
     const patch: any = { status };
     if (status === "completed") patch.completed_at = new Date().toISOString();
+    if (status === "cancelled") {
+      patch.cancelled_by = isDriver ? "driver" : "customer";
+      patch.cancellation_fee = ride.status === "accepted" || ride.status === "in_progress" ? CANCEL_FEE : 0;
+    }
     const { error } = await supabase.from("rides").update(patch).eq("id", ride.id);
     setBusy(false);
-    if (error) toast.error(error.message); else { toast.success(`Marked ${status}`); reload(); }
+    if (error) toast.error(error.message);
+    else {
+      if (status === "cancelled" && patch.cancellation_fee) toast.success(`Cancelled · P${patch.cancellation_fee} fee`);
+      else toast.success(`Marked ${status}`);
+      reload();
+    }
   };
 
   const rate = async () => {
     if (!rating) return;
-    const { error } = await supabase.from("rides").update({ rating }).eq("id", ride.id);
+    const { error } = await supabase.from("rides").update({ rating, rating_comment: comment.trim() || null }).eq("id", ride.id);
     if (error) toast.error(error.message); else { toast.success("Thanks for rating!"); reload(); }
   };
 
@@ -86,22 +97,26 @@ function RideCard({ ride, isDriver, reload }: { ride: any; isDriver: boolean; re
         <Button variant="outline" onClick={() => advance("cancelled")} disabled={busy} className="mt-3 w-full rounded-full">Cancel</Button>
       )}
       {!isDriver && ride.status === "completed" && !ride.rating && (
-        <div className="mt-3 rounded-xl bg-accent p-3">
+        <div className="mt-3 space-y-2 rounded-xl bg-accent p-3">
           <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rate your driver</div>
-          <div className="mt-2 flex items-center gap-1">
+          <div className="flex items-center gap-1">
             {[1,2,3,4,5].map((n) => (
               <button key={n} onClick={() => setRating(n)} className="p-1">
                 <Star className={`h-6 w-6 ${n <= rating ? "fill-primary text-primary" : "text-muted-foreground"}`} />
               </button>
             ))}
-            <Button onClick={rate} disabled={!rating} size="sm" className="ml-auto rounded-full">Submit</Button>
           </div>
+          <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Optional feedback" maxLength={280} className="min-h-[60px] text-sm" />
+          <Button onClick={rate} disabled={!rating} size="sm" className="w-full rounded-full">Submit rating</Button>
         </div>
       )}
       {ride.rating && (
         <div className="mt-3 flex items-center gap-1 text-sm text-muted-foreground">
           <CheckCircle2 className="h-4 w-4 text-primary" /> Rated {ride.rating}/5
         </div>
+      )}
+      {ride.cancellation_fee > 0 && (
+        <div className="mt-2 text-xs text-destructive">Cancellation fee: P{ride.cancellation_fee}</div>
       )}
     </div>
   );
