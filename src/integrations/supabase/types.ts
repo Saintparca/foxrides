@@ -41,47 +41,65 @@ export type Database = {
       drivers: {
         Row: {
           activation_paid: boolean
+          approval_status: Database["public"]["Enums"]["driver_approval_status"]
           country: string
           created_at: string
           id: string
+          insurance_url: string | null
           is_approved: boolean
           is_available: boolean
           last_weekly_payment_at: string | null
           license_number: string
+          license_url: string | null
+          omang_url: string | null
           profile_pic_url: string | null
+          rejection_reason: string | null
           vehicle_make: string
           vehicle_model: string
           vehicle_plate: string
+          vehicle_reg_url: string | null
           vehicle_year: number | null
         }
         Insert: {
           activation_paid?: boolean
+          approval_status?: Database["public"]["Enums"]["driver_approval_status"]
           country?: string
           created_at?: string
           id: string
+          insurance_url?: string | null
           is_approved?: boolean
           is_available?: boolean
           last_weekly_payment_at?: string | null
           license_number: string
+          license_url?: string | null
+          omang_url?: string | null
           profile_pic_url?: string | null
+          rejection_reason?: string | null
           vehicle_make: string
           vehicle_model: string
           vehicle_plate: string
+          vehicle_reg_url?: string | null
           vehicle_year?: number | null
         }
         Update: {
           activation_paid?: boolean
+          approval_status?: Database["public"]["Enums"]["driver_approval_status"]
           country?: string
           created_at?: string
           id?: string
+          insurance_url?: string | null
           is_approved?: boolean
           is_available?: boolean
           last_weekly_payment_at?: string | null
           license_number?: string
+          license_url?: string | null
+          omang_url?: string | null
           profile_pic_url?: string | null
+          rejection_reason?: string | null
           vehicle_make?: string
           vehicle_model?: string
           vehicle_plate?: string
+          vehicle_reg_url?: string | null
           vehicle_year?: number | null
         }
         Relationships: []
@@ -197,6 +215,39 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_places: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          lat: number | null
+          lng: number | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label: string
+          lat?: number | null
+          lng?: number | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          lat?: number | null
+          lng?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -218,6 +269,36 @@ export type Database = {
         }
         Relationships: []
       }
+      withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          driver_id: string
+          id: string
+          note: string | null
+          processed_at: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          driver_id: string
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          driver_id?: string
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -233,6 +314,7 @@ export type Database = {
     }
     Enums: {
       app_role: "customer" | "driver" | "admin"
+      driver_approval_status: "pending" | "approved" | "rejected" | "suspended"
       ride_status:
         | "requested"
         | "accepted"
@@ -367,6 +449,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["customer", "driver", "admin"],
+      driver_approval_status: ["pending", "approved", "rejected", "suspended"],
       ride_status: [
         "requested",
         "accepted",
