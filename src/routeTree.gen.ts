@@ -22,6 +22,10 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin.promos'
+import { Route as AuthenticatedAdminLiveRouteImport } from './routes/_authenticated/admin.live'
+import { Route as AuthenticatedAdminFaresRouteImport } from './routes/_authenticated/admin.fares'
+import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 
 const DriverOnboardingRoute = DriverOnboardingRouteImport.update({
   id: '/driver-onboarding',
@@ -89,6 +93,28 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminPromosRoute =
+  AuthenticatedAdminPromosRouteImport.update({
+    id: '/promos',
+    path: '/promos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminLiveRoute = AuthenticatedAdminLiveRouteImport.update({
+  id: '/live',
+  path: '/live',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminFaresRoute = AuthenticatedAdminFaresRouteImport.update({
+  id: '/fares',
+  path: '/fares',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminAnalyticsRoute =
+  AuthenticatedAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +127,10 @@ export interface FileRoutesByFullPath {
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/saved-places': typeof AuthenticatedSavedPlacesRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/fares': typeof AuthenticatedAdminFaresRoute
+  '/admin/live': typeof AuthenticatedAdminLiveRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -114,6 +144,10 @@ export interface FileRoutesByTo {
   '/earnings': typeof AuthenticatedEarningsRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/saved-places': typeof AuthenticatedSavedPlacesRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/fares': typeof AuthenticatedAdminFaresRoute
+  '/admin/live': typeof AuthenticatedAdminLiveRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
@@ -130,6 +164,10 @@ export interface FileRoutesById {
   '/_authenticated/earnings': typeof AuthenticatedEarningsRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/saved-places': typeof AuthenticatedSavedPlacesRoute
+  '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/_authenticated/admin/fares': typeof AuthenticatedAdminFaresRoute
+  '/_authenticated/admin/live': typeof AuthenticatedAdminLiveRoute
+  '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
@@ -146,6 +184,10 @@ export interface FileRouteTypes {
     | '/earnings'
     | '/history'
     | '/saved-places'
+    | '/admin/analytics'
+    | '/admin/fares'
+    | '/admin/live'
+    | '/admin/promos'
     | '/admin/users'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -159,6 +201,10 @@ export interface FileRouteTypes {
     | '/earnings'
     | '/history'
     | '/saved-places'
+    | '/admin/analytics'
+    | '/admin/fares'
+    | '/admin/live'
+    | '/admin/promos'
     | '/admin/users'
     | '/admin'
   id:
@@ -174,6 +220,10 @@ export interface FileRouteTypes {
     | '/_authenticated/earnings'
     | '/_authenticated/history'
     | '/_authenticated/saved-places'
+    | '/_authenticated/admin/analytics'
+    | '/_authenticated/admin/fares'
+    | '/_authenticated/admin/live'
+    | '/_authenticated/admin/promos'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
@@ -279,15 +329,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/promos': {
+      id: '/_authenticated/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AuthenticatedAdminPromosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/live': {
+      id: '/_authenticated/admin/live'
+      path: '/live'
+      fullPath: '/admin/live'
+      preLoaderRoute: typeof AuthenticatedAdminLiveRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/fares': {
+      id: '/_authenticated/admin/fares'
+      path: '/fares'
+      fullPath: '/admin/fares'
+      preLoaderRoute: typeof AuthenticatedAdminFaresRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/analytics': {
+      id: '/_authenticated/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
+  AuthenticatedAdminFaresRoute: typeof AuthenticatedAdminFaresRoute
+  AuthenticatedAdminLiveRoute: typeof AuthenticatedAdminLiveRoute
+  AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminFaresRoute: AuthenticatedAdminFaresRoute,
+  AuthenticatedAdminLiveRoute: AuthenticatedAdminLiveRoute,
+  AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
