@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          activation_fee: number
+          base_fare: number
+          cancel_fee: number
+          driver_share: number
+          id: boolean
+          min_fare: number
+          per_km: number
+          per_min: number
+          updated_at: string
+          weekly_fee: number
+        }
+        Insert: {
+          activation_fee?: number
+          base_fare?: number
+          cancel_fee?: number
+          driver_share?: number
+          id?: boolean
+          min_fare?: number
+          per_km?: number
+          per_min?: number
+          updated_at?: string
+          weekly_fee?: number
+        }
+        Update: {
+          activation_fee?: number
+          base_fare?: number
+          cancel_fee?: number
+          driver_share?: number
+          id?: boolean
+          min_fare?: number
+          per_km?: number
+          per_min?: number
+          updated_at?: string
+          weekly_fee?: number
+        }
+        Relationships: []
+      }
       driver_locations: {
         Row: {
           driver_id: string
@@ -133,6 +172,81 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          times_used: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          times_used?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          times_used?: number
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          code_id: string
+          created_at: string
+          id: string
+          ride_id: string | null
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          created_at?: string
+          id?: string
+          ride_id?: string | null
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          created_at?: string
+          id?: string
+          ride_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rides: {
         Row: {
