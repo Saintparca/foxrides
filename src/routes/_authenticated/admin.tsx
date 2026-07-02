@@ -24,6 +24,10 @@ function AdminLayout() {
   const tabs = [
     { to: "/app/admin", label: "Dashboard", active: path === "/app/admin" },
     { to: "/app/admin/users", label: "Users", active: path.startsWith("/app/admin/users") },
+    { to: "/app/admin/live", label: "Live map", active: path.startsWith("/app/admin/live") },
+    { to: "/app/admin/fares", label: "Fares", active: path.startsWith("/app/admin/fares") },
+    { to: "/app/admin/promos", label: "Promos", active: path.startsWith("/app/admin/promos") },
+    { to: "/app/admin/analytics", label: "Analytics", active: path.startsWith("/app/admin/analytics") },
   ];
 
   return (
@@ -31,18 +35,20 @@ function AdminLayout() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-black tracking-tight">Admin</h1>
       </div>
-      <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-        {tabs.map((t) => (
-          <Link
-            key={t.to}
-            to={t.to}
-            className={`rounded-full py-2 text-center text-sm font-semibold transition ${
-              t.active ? "bg-background shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            {t.label}
-          </Link>
-        ))}
+      <div className="-mx-4 overflow-x-auto px-4">
+        <div className="flex gap-1 rounded-full bg-muted p-1 w-max min-w-full">
+          {tabs.map((t) => (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-center text-sm font-semibold transition ${
+                t.active ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
       </div>
       <Outlet />
     </div>
