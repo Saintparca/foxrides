@@ -3,11 +3,12 @@ import { createServerFn } from "@tanstack/react-start";
 type Pt = { lat: number; lng: number };
 
 export const computeRoute = createServerFn({ method: "POST" })
-  .inputValidator((d: { origin: Pt; destination: Pt }) => {
+  .inputValidator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
     const ok = (p: any) =>
       p && typeof p.lat === "number" && typeof p.lng === "number" &&
       p.lat >= -90 && p.lat <= 90 && p.lng >= -180 && p.lng <= 180;
     if (!ok(d?.origin) || !ok(d?.destination)) throw new Error("Invalid coordinates");
+    if (d.intermediates && d.intermediates.some((p) => !ok(p))) throw new Error("Invalid stop coordinates");
     return d;
   })
   .handler(async ({ data }) => {
@@ -17,6 +18,15 @@ export const computeRoute = createServerFn({ method: "POST" })
       return { ok: false as const, error: "Maps not configured", distanceKm: 0, durationMin: 0, polyline: "" };
     }
     try {
+      const body: any = {
+        origin: { location: { latLng: { latitude: data.origin.lat, longitude: data.origin.lng } } },
+        destination: { location: { latLng: { latitude: data.destination.lat, longitude: data.destination.lng } } },
+        travelMode: "DRIVE",
+        routingPreference: "TRAFFIC_AWARE",
+      };
+      if (data.intermediates?.length) {
+        body.intermediates = data.intermediates.map((p) => ({ location: { latLng: { latitude: p.lat, longitude: p.lng } } }));
+      }
       const res = await fetch(
         "https://connector-gateway.lovable.dev/google_maps/routes/directions/v2:computeRoutes",
         {
@@ -27,14 +37,10 @@ export const computeRoute = createServerFn({ method: "POST" })
             "Content-Type": "application/json",
             "X-Goog-FieldMask": "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
           },
-          body: JSON.stringify({
-            origin: { location: { latLng: { latitude: data.origin.lat, longitude: data.origin.lng } } },
-            destination: { location: { latLng: { latitude: data.destination.lat, longitude: data.destination.lng } } },
-            travelMode: "DRIVE",
-            routingPreference: "TRAFFIC_AWARE",
-          }),
+          body: JSON.stringify(body),
         }
       );
+
       if (!res.ok) {
         const txt = await res.text();
         return { ok: false as const, error: `Routes ${res.status}: ${txt.slice(0, 200)}`, distanceKm: 0, durationMin: 0, polyline: "" };

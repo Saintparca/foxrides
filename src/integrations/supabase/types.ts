@@ -273,7 +273,9 @@ export type Database = {
           rating: number | null
           rating_comment: string | null
           route_polyline: string | null
+          scheduled_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
+          stops: Json
         }
         Insert: {
           cancellation_fee?: number
@@ -299,7 +301,9 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           route_polyline?: string | null
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
+          stops?: Json
         }
         Update: {
           cancellation_fee?: number
@@ -325,7 +329,9 @@ export type Database = {
           rating?: number | null
           rating_comment?: string | null
           route_polyline?: string | null
+          scheduled_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
+          stops?: Json
         }
         Relationships: []
       }
