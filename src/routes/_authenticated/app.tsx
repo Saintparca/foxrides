@@ -8,11 +8,13 @@ import { computeRoute } from "@/lib/routes.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { MapPin, Navigation, Car, Star, Clock, MessageCircle, Home, Briefcase, Plus, X } from "lucide-react";
+import { MapPin, Navigation, Car, Star, Clock, MessageCircle, Home, Briefcase, Plus, X, CalendarClock } from "lucide-react";
 import { PlaceAutocomplete, type PlacePick } from "@/components/PlaceAutocomplete";
 import { RouteMap } from "@/components/RouteMap";
 import { OWNER_WHATSAPP_LOCAL, waLink } from "@/lib/whatsapp";
 import { DriverActionsBar } from "@/components/DriverActionsBar";
+import { useI18n, LanguageToggle } from "@/lib/i18n";
+
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppHome,
