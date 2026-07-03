@@ -23,28 +23,33 @@ export const Route = createFileRoute("/_authenticated/app")({
 function AppHome() {
   const { user, roles } = useAuth();
   const isDriver = roles.includes("driver");
+  const { t } = useI18n();
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-black tracking-tight">
-            {isDriver ? "Ready to drive" : "Where to?"}
+            {isDriver ? t("ready_to_drive") : t("where_to")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {isDriver ? "Toggle availability and pick up nearby rides." : "Real road routes · live fare in Pula."}
           </p>
         </div>
-        <a href={waLink("Hi Fox Rides, I need help.")} target="_blank" rel="noreferrer"
-           className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-2 text-xs font-bold text-white">
-          <MessageCircle className="h-3.5 w-3.5" /> {OWNER_WHATSAPP_LOCAL}
-        </a>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <LanguageToggle />
+          <a href={waLink("Hi Fox Rides, I need help.")} target="_blank" rel="noreferrer"
+             className="flex items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-2 text-xs font-bold text-white">
+            <MessageCircle className="h-3.5 w-3.5" /> {OWNER_WHATSAPP_LOCAL}
+          </a>
+        </div>
       </div>
 
       {isDriver ? <DriverPanel userId={user!.id} /> : <CustomerPanel userId={user!.id} />}
     </div>
   );
 }
+
 
 function CustomerPanel({ userId }: { userId: string }) {
   const [activeRide, setActiveRide] = useState<any>(null);
