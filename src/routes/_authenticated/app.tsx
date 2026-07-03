@@ -169,10 +169,13 @@ function ActiveRideCard({ ride, onChange }: { ride: any; onChange: () => void })
 }
 
 function BookingPanel({ userId }: { userId: string }) {
+  const { t } = useI18n();
   const [pickup, setPickup] = useState<PlacePick | null>(null);
   const [dest, setDest] = useState<PlacePick | null>(null);
   const [pickupText, setPickupText] = useState("");
   const [destText, setDestText] = useState("");
+  const [stops, setStops] = useState<Array<{ pick: PlacePick | null; text: string }>>([]);
+  const [scheduledAt, setScheduledAt] = useState<string>(""); // datetime-local value
   const [busy, setBusy] = useState(false);
   const [route, setRoute] = useState<{ km: number; min: number; polyline: string } | null>(null);
   const [routing, setRouting] = useState(false);
@@ -197,17 +200,22 @@ function BookingPanel({ userId }: { userId: string }) {
     );
   }, []);
 
+  const stopKey = stops.map(s => s.pick ? `${s.pick.lat},${s.pick.lng}` : "").join("|");
+
   useEffect(() => {
     if (!pickup || !dest) { setRoute(null); return; }
     const n = ++seq.current;
     setRouting(true);
-    compute({ data: { origin: { lat: pickup.lat, lng: pickup.lng }, destination: { lat: dest.lat, lng: dest.lng } } })
+    const intermediates = stops.filter(s => s.pick).map(s => ({ lat: s.pick!.lat, lng: s.pick!.lng }));
+    compute({ data: { origin: { lat: pickup.lat, lng: pickup.lng }, destination: { lat: dest.lat, lng: dest.lng }, intermediates } })
       .then((r) => {
         if (n !== seq.current) return;
         if (r.ok) setRoute({ km: r.distanceKm, min: r.durationMin, polyline: r.polyline });
         else {
-          const km = haversineKm(pickup, dest);
-          setRoute({ km, min: Math.max(3, Math.round(km * 2)), polyline: "" });
+          let km = 0;
+          const chain: PlacePick[] = [pickup, ...stops.filter(s => s.pick).map(s => s.pick!), dest];
+          for (let i = 1; i < chain.length; i++) km += haversineKm(chain[i - 1], chain[i]);
+          setRoute({ km: Math.round(km * 10) / 10, min: Math.max(3, Math.round(km * 2)), polyline: "" });
         }
       })
       .catch(() => {
@@ -215,7 +223,7 @@ function BookingPanel({ userId }: { userId: string }) {
         setRoute({ km, min: Math.max(3, Math.round(km * 2)), polyline: "" });
       })
       .finally(() => { if (n === seq.current) setRouting(false); });
-  }, [pickup?.lat, pickup?.lng, dest?.lat, dest?.lng]);
+  }, [pickup?.lat, pickup?.lng, dest?.lat, dest?.lng, stopKey]);
 
   const km = route?.km ?? 0;
   const min = route?.min ?? 0;
@@ -226,10 +234,23 @@ function BookingPanel({ userId }: { userId: string }) {
     setDestText(p.address);
   };
 
+  const addStop = () => setStops([...stops, { pick: null, text: "" }]);
+  const removeStop = (i: number) => setStops(stops.filter((_, idx) => idx !== i));
+
   const book = async () => {
     if (!pickup || !dest || !route) { toast.error("Pick both pickup and destination"); return; }
     setBusy(true);
-    const eta = new Date(Date.now() + min * 60 * 1000).toISOString();
+    const scheduledIso = scheduledAt ? new Date(scheduledAt).toISOString() : null;
+    if (scheduledIso && new Date(scheduledIso).getTime() < Date.now() + 5 * 60 * 1000) {
+      setBusy(false);
+      toast.error("Schedule at least 5 minutes in the future");
+      return;
+    }
+    const startTs = scheduledIso ? new Date(scheduledIso).getTime() : Date.now();
+    const eta = new Date(startTs + min * 60 * 1000).toISOString();
+    const stopsPayload = stops.filter(s => s.pick).map(s => ({
+      address: s.pick!.address, lat: s.pick!.lat, lng: s.pick!.lng,
+    }));
     const { error } = await supabase.from("rides").insert({
       customer_id: userId,
       pickup_address: pickup.address,
@@ -239,15 +260,24 @@ function BookingPanel({ userId }: { userId: string }) {
       distance_km: km, fare, status: "requested",
       route_polyline: route.polyline || null,
       duration_min: min, eta_at: eta,
-    });
+      scheduled_at: scheduledIso,
+      stops: stopsPayload,
+    } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Ride requested! A driver will accept shortly.");
+    toast.success(scheduledIso ? "Ride scheduled!" : "Ride requested! A driver will accept shortly.");
   };
 
   const home = saved.find(s => s.kind === "home");
   const work = saved.find(s => s.kind === "work");
   const favs = saved.filter(s => s.kind === "favourite").slice(0, 3);
+
+  // min datetime-local = now + 5 min, formatted
+  const minSchedule = (() => {
+    const d = new Date(Date.now() + 5 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  })();
 
   return (
     <div className="space-y-5">
@@ -256,12 +286,12 @@ function BookingPanel({ userId }: { userId: string }) {
       <div className="flex flex-wrap items-center gap-2">
         {home ? (
           <button onClick={() => pickSaved(home)} className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold">
-            <Home className="h-3.5 w-3.5" /> Home
+            <Home className="h-3.5 w-3.5" /> {t("home")}
           </button>
         ) : null}
         {work ? (
           <button onClick={() => pickSaved(work)} className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold">
-            <Briefcase className="h-3.5 w-3.5" /> Work
+            <Briefcase className="h-3.5 w-3.5" /> {t("work")}
           </button>
         ) : null}
         {favs.map(f => (
@@ -270,7 +300,7 @@ function BookingPanel({ userId }: { userId: string }) {
           </button>
         ))}
         <Link to="/app/saved-places" className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-bold text-muted-foreground">
-          <Plus className="h-3.5 w-3.5" /> Manage
+          <Plus className="h-3.5 w-3.5" /> {t("manage")}
         </Link>
       </div>
 
@@ -279,45 +309,94 @@ function BookingPanel({ userId }: { userId: string }) {
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-fox text-fox-foreground"><MapPin className="h-4 w-4" /></div>
             <div className="flex-1 min-w-0">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pickup</Label>
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("pickup")}</Label>
               <PlaceAutocomplete value={pickupText} placeholder="Current location"
                 onTextChange={setPickupText}
                 onPick={(p) => { setPickup(p); setPickupText(p.address); }} />
             </div>
           </div>
+
+          {stops.map((s, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-muted text-foreground text-xs font-black">{i + 1}</div>
+              <div className="flex-1 min-w-0">
+                <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("stop")} {i + 1}</Label>
+                <PlaceAutocomplete value={s.text} placeholder={`${t("stop")} ${i + 1}`}
+                  onTextChange={(v) => setStops(stops.map((x, idx) => idx === i ? { ...x, text: v } : x))}
+                  onPick={(p) => setStops(stops.map((x, idx) => idx === i ? { pick: p, text: p.address } : x))} />
+              </div>
+              <button onClick={() => removeStop(i)} aria-label={t("remove")} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+
           <div className="ml-4 h-4 w-px bg-border" />
           <div className="flex items-center gap-3">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground"><Navigation className="h-4 w-4" /></div>
             <div className="flex-1 min-w-0">
-              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Destination</Label>
-              <PlaceAutocomplete value={destText} placeholder="Where to?"
+              <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t("destination")}</Label>
+              <PlaceAutocomplete value={destText} placeholder={t("where_to")}
                 onTextChange={setDestText}
                 onPick={(p) => { setDest(p); setDestText(p.address); }} />
             </div>
           </div>
+
+          <button
+            onClick={addStop}
+            className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-bold text-muted-foreground"
+          >
+            <Plus className="h-3.5 w-3.5" /> {t("add_stop")}
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)]">
+        <Label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <CalendarClock className="h-3.5 w-3.5" /> {t("schedule_ride")}
+        </Label>
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            min={minSchedule}
+            onChange={(e) => setScheduledAt(e.target.value)}
+            className="h-10 flex-1 rounded-xl border border-border bg-background px-3 text-sm"
+          />
+          {scheduledAt && (
+            <button onClick={() => setScheduledAt("")} className="rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+              {t("now")}
+            </button>
+          )}
         </div>
       </div>
 
       <div className="rounded-2xl bg-gradient-ink p-5 text-background">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-wider text-background/60">Estimated fare</div>
+            <div className="text-xs uppercase tracking-wider text-background/60">{t("estimated_fare")}</div>
             <div className="mt-1 text-4xl font-black">{fare ? fmtMoney(fare) : "—"}</div>
             <div className="mt-1 text-xs text-background/60">
-              {routing ? "Calculating route…" : km ? `${km} km · ${min} min` : "Pick a destination to estimate"}
+              {routing ? t("calculating") : km ? `${km} km · ${min} min${stops.filter(s=>s.pick).length ? ` · ${stops.filter(s=>s.pick).length} ${t("stop").toLowerCase()}` : ""}` : t("pick_dest_hint")}
             </div>
+            {scheduledAt && (
+              <div className="mt-1 flex items-center gap-1 text-xs text-fox">
+                <Clock className="h-3 w-3" /> {t("scheduled")}: {new Date(scheduledAt).toLocaleString()}
+              </div>
+            )}
           </div>
           <div className="grid h-14 w-14 place-items-center rounded-full bg-fox text-fox-foreground shadow-[var(--shadow-fox)]"><Car className="h-6 w-6" /></div>
         </div>
       </div>
 
       <Button onClick={book} disabled={busy || !pickup || !dest || !route} className="h-14 w-full rounded-full text-base font-bold shadow-[var(--shadow-fox)]">
-        {busy ? "Requesting…" : "Request Fox"}
+        {busy ? t("requesting") : scheduledAt ? t("schedule_fox") : t("request_fox")}
       </Button>
 
-      <Link to="/app/history" className="block text-center text-sm font-semibold text-primary hover:underline">View ride history →</Link>
+      <Link to="/app/history" className="block text-center text-sm font-semibold text-primary hover:underline">{t("view_history")} →</Link>
     </div>
   );
+
 }
 
 function DriverPanel({ userId }: { userId: string }) {
