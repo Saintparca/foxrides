@@ -5,7 +5,9 @@ export const PER_MIN = 0.4;         // P0.40 per minute
 export const MIN_FARE = 15;         // P15 minimum
 export const BOOKING_FEE = 0;
 export const CANCEL_FEE = 10;       // P10 after driver arrives
-export const DRIVER_SHARE = 0.85;   // 15% commission
+export const DRIVER_SHARE = 0.90;   // 10% commission — driver keeps 90%
+export const DAILY_PAYOUT_FEE = 15; // P15 optional daily payout fee (P10–P20 range)
+export const WEEKLY_PAYOUT_FEE = 0; // Free weekly payout
 
 export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371;
