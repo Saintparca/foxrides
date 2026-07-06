@@ -53,30 +53,23 @@ function Page() {
         <p className="mt-1 text-sm text-muted-foreground">Pay via Orange Money, then confirm on WhatsApp.</p>
       </div>
 
-      <PayCard
-        title="Activation fee"
-        amount="P 100"
-        subtitle="One-time, to start accepting rides"
-        paid={driver.activation_paid}
-        message={`Fox Rides activation P100 paid via Orange Money. Driver: ${user?.email}`}
-        onMark={() => markPaid("activation")}
-      />
-
-      <PayCard
-        title="Weekly fee"
-        amount="P 50"
-        subtitle="Every Sunday to keep driving"
-        paid={!weeklyDue}
-        message={`Fox Rides weekly P50 paid via Orange Money. Driver: ${user?.email}`}
-        onMark={() => markPaid("weekly")}
-        extra={lastPaid ? `Last paid ${lastPaid.toLocaleDateString()}` : "Never paid"}
-      />
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <div className="text-sm font-bold text-emerald-900">Good news — driving with Fox Rides is free</div>
+        <ul className="mt-2 space-y-1 text-xs text-emerald-900/90">
+          <li>• Registration: <b>Free</b></li>
+          <li>• Monthly subscription: <b>P0</b></li>
+          <li>• Commission: <b>10% per completed trip</b> (you keep 90%)</li>
+          <li>• Weekly payout: <b>Free</b></li>
+          <li>• Optional daily payout: <b>P10–P20 fee</b></li>
+        </ul>
+      </div>
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
         <div className="flex items-center gap-2 text-sm font-bold"><Wallet className="h-4 w-4 text-fox" /> Orange Money number</div>
         <div className="mt-2 text-2xl font-black tracking-wider">{OWNER_ORANGE_MONEY}</div>
-        <p className="mt-2 text-xs text-muted-foreground">Send the amount, then tap WhatsApp on the card above to send proof to {OWNER_WHATSAPP_LOCAL}.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Payouts are sent from {OWNER_WHATSAPP_LOCAL}. Reach out on WhatsApp for any payment questions.</p>
       </div>
+
     </div>
   );
 }
