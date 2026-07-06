@@ -18,7 +18,7 @@ type Settings = {
 
 const DEFAULTS: Settings = {
   base_fare: 10, per_km: 2.5, per_min: 0.4, min_fare: 15,
-  cancel_fee: 10, driver_share: 0.85, activation_fee: 100, weekly_fee: 50,
+  cancel_fee: 10, driver_share: 0.90, activation_fee: 0, weekly_fee: 0,
 };
 
 function AdminFares() {
