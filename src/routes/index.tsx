@@ -1,126 +1,139 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Car, Clock, Shield, Star } from "lucide-react";
+import { Shield, Clock, Wallet, ArrowRight } from "lucide-react";
+import foxMark from "@/assets/fox-mark.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fox Rides — Book rides in seconds" },
-      { name: "description", content: "Fox Rides connects you with nearby drivers. Transparent fares, real ratings, instant booking." },
+      { title: "Fox Rides — Your Ride. Your Way." },
+      { name: "description", content: "Safe, reliable and affordable rides anytime, anywhere in Botswana." },
     ],
   }),
-  component: Landing,
+  component: Welcome,
 });
 
-function Landing() {
+function Welcome() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <FoxMark />
-            <span className="text-lg font-black tracking-tight">Fox Rides</span>
+    <div className="relative min-h-screen overflow-hidden bg-[#0a0a0a] text-white">
+      {/* Decorative dot patterns */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 10% 8%, rgba(255,109,26,0.25) 1px, transparent 1.5px), radial-gradient(circle at 92% 92%, rgba(255,109,26,0.22) 1px, transparent 1.5px)",
+          backgroundSize: "18px 18px, 16px 16px",
+          backgroundPosition: "top left, bottom right",
+          backgroundRepeat: "no-repeat",
+          maskImage:
+            "radial-gradient(60% 40% at 10% 8%, black 40%, transparent 70%), radial-gradient(50% 40% at 92% 92%, black 40%, transparent 70%)",
+          WebkitMaskComposite: "source-over",
+        }}
+      />
+      {/* Subtle orange arc top-left */}
+      <div className="pointer-events-none absolute -left-40 -top-40 h-[420px] w-[420px] rounded-full border border-[#ff6d1a]/25" />
+      <div className="pointer-events-none absolute -right-32 -bottom-32 h-[360px] w-[360px] rounded-full border border-[#ff6d1a]/15" />
+
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col px-6 pb-8 pt-14">
+        {/* Logo */}
+        <div className="flex flex-col items-center">
+          <img
+            src={foxMark}
+            alt="Fox Rides"
+            className="h-40 w-40 select-none drop-shadow-[0_10px_30px_rgba(255,109,26,0.35)]"
+            draggable={false}
+          />
+          <h1 className="mt-4 text-5xl font-black tracking-tight">
+            <span className="text-[#ff6d1a]">FOX</span> <span className="text-white">RIDES</span>
+          </h1>
+          <p className="mt-3 text-[13px] font-semibold tracking-[0.28em] text-white/80">
+            YOUR RIDE. <span className="text-[#ff6d1a]">YOUR WAY.</span>
+          </p>
+        </div>
+
+        {/* Welcome copy */}
+        <div className="mt-14 text-center">
+          <h2 className="text-2xl font-bold">Welcome to Fox Rides</h2>
+          <p className="mx-auto mt-3 max-w-xs text-[15px] leading-relaxed text-white/60">
+            Safe, reliable and affordable rides anytime, anywhere in Botswana.
+          </p>
+        </div>
+
+        {/* Feature row */}
+        <div className="mt-10 grid grid-cols-3 gap-0">
+          <Feature icon={<Shield className="h-8 w-8" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
+          <div className="flex items-center justify-center">
+            <div className="h-14 w-px bg-white/15" />
+          </div>
+          <Feature icon={<Clock className="h-8 w-8" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} noDivider />
+        </div>
+        {/* Second row alignment — replicate 3-across with dividers */}
+        <div className="-mt-[92px] grid grid-cols-[1fr_1px_1fr_1px_1fr] items-center gap-0">
+          <Feature icon={<Shield className="h-8 w-8" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
+          <div className="h-14 w-px bg-white/15" />
+          <Feature icon={<Clock className="h-8 w-8" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} />
+          <div className="h-14 w-px bg-white/15" />
+          <Feature icon={<Wallet className="h-8 w-8" strokeWidth={1.75} />} label={<>AFFORDABLE<br/>FARES</>} />
+        </div>
+
+        {/* CTAs */}
+        <div className="mt-auto space-y-4 pt-12">
+          <Link
+            to="/auth"
+            search={{ role: "customer" }}
+            className="flex h-14 w-full items-center justify-center rounded-full bg-[#ff6d1a] text-base font-bold tracking-[0.18em] text-white shadow-[0_12px_30px_-8px_rgba(255,109,26,0.55)] transition active:scale-[0.98]"
+          >
+            GET STARTED
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/auth" className="rounded-full px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground">
-              Sign in
+          <Link
+            to="/auth"
+            className="flex h-14 w-full items-center justify-center rounded-full border-2 border-[#ff6d1a] text-base font-bold tracking-[0.18em] text-[#ff6d1a] transition hover:bg-[#ff6d1a]/10"
+          >
+            LOGIN
+          </Link>
+          <p className="pt-2 text-center text-sm text-white/60">
+            New here?{" "}
+            <Link
+              to="/auth"
+              search={{ role: "customer" }}
+              className="inline-flex items-center gap-1 font-semibold text-[#ff6d1a]"
+            >
+              Create an account <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-            <Link to="/auth" search={{ tab: "signup" }} className="rounded-full bg-foreground px-4 py-1.5 text-sm font-semibold text-background hover:bg-foreground/90">
-              Get started
-            </Link>
-          </div>
+          </p>
         </div>
-      </header>
-
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_0%,color-mix(in_oklab,var(--fox)_18%,transparent),transparent_70%)]" />
-        <div className="mx-auto max-w-5xl px-5 pb-16 pt-12 sm:pt-20">
-          <div className="grid gap-10 sm:grid-cols-[1.1fr_0.9fr] sm:items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-wider text-accent-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" /> Now in your city
-              </span>
-              <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-6xl">
-                Rides that<br />
-                <span className="text-primary">move with you.</span>
-              </h1>
-              <p className="mt-5 max-w-md text-base text-muted-foreground sm:text-lg">
-                Book a Fox in seconds. Clean cars, vetted drivers, and prices you can see before you tap.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Link to="/auth" search={{ tab: "signup", role: "customer" }} className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-fox)] hover:bg-primary/90">
-                  Book a ride
-                </Link>
-                <Link to="/auth" search={{ tab: "signup", role: "driver" }} className="rounded-full border border-foreground/15 bg-card px-6 py-3 text-sm font-semibold hover:bg-accent">
-                  Drive with Fox
-                </Link>
-              </div>
-              <div className="mt-8 flex items-center gap-6 text-xs text-muted-foreground">
-                <Stat icon={<Shield className="h-4 w-4" />} label="Verified drivers" />
-                <Stat icon={<Clock className="h-4 w-4" />} label="Avg 4 min pickup" />
-                <Stat icon={<Star className="h-4 w-4" />} label="4.9 rating" />
-              </div>
-            </div>
-
-            {/* Phone mock */}
-            <div className="relative mx-auto w-full max-w-sm">
-              <div className="relative aspect-[9/16] rounded-[2.5rem] border-[10px] border-foreground bg-gradient-ink p-4 shadow-[0_30px_60px_-20px_rgba(0,0,0,0.5)]">
-                <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-foreground/40" />
-                <div className="rounded-2xl bg-background p-4 text-foreground">
-                  <div className="flex items-center gap-2"><FoxMark small /><span className="text-sm font-bold">Fox Rides</span></div>
-                  <div className="mt-4 space-y-2 rounded-xl bg-muted p-3">
-                    <Row dot="bg-primary" text="Pickup · Main St & 4th" />
-                    <div className="ml-1.5 h-3 w-px bg-border" />
-                    <Row dot="bg-foreground" text="Drop · Airport Terminal 2" />
-                  </div>
-                  <div className="mt-4 flex items-center justify-between rounded-xl border border-border p-3">
-                    <div>
-                      <div className="text-xs text-muted-foreground">Estimated fare</div>
-                      <div className="text-2xl font-black">$18.40</div>
-                    </div>
-                    <div className="rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground">Confirm</div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-3 rounded-xl bg-accent p-3">
-                    <div className="grid h-9 w-9 place-items-center rounded-full bg-foreground text-background"><Car className="h-4 w-4" /></div>
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold">Maya · Tesla Model 3</div>
-                      <div className="text-xs text-muted-foreground">★ 4.97 · 3 min away</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-border/60 py-8 text-center text-xs text-muted-foreground">
-        © Fox Rides · <Link to="/admin-info" className="underline-offset-2 hover:underline">Admin</Link>
-      </footer>
+      </div>
     </div>
   );
 }
 
-function Stat({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return <div className="flex items-center gap-1.5">{icon}<span>{label}</span></div>;
-}
-function Row({ dot, text }: { dot: string; text: string }) {
+function Feature({
+  icon,
+  label,
+  noDivider: _noDivider,
+}: {
+  icon: React.ReactNode;
+  label: React.ReactNode;
+  noDivider?: boolean;
+}) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
-      <span className="truncate">{text}</span>
+    <div className="flex flex-col items-center gap-3 text-center text-[#ff6d1a]">
+      {icon}
+      <div className="text-[11px] font-bold leading-tight tracking-[0.15em] text-white">
+        {label}
+      </div>
     </div>
   );
 }
 
+// Kept for backwards compatibility with other routes importing FoxMark.
 export function FoxMark({ small = false }: { small?: boolean }) {
   const size = small ? "h-6 w-6" : "h-8 w-8";
   return (
-    <div className={`${size} grid place-items-center rounded-lg bg-gradient-fox text-primary-foreground shadow-[var(--shadow-fox)]`}>
-      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 4l3 5-3 3 4 1 3 6 3-6 4-1-3-3 3-5-5 2-2-2-2 2z" />
-      </svg>
-    </div>
+    <img
+      src={foxMark}
+      alt="Fox Rides"
+      className={`${size} select-none`}
+      draggable={false}
+    />
   );
 }
