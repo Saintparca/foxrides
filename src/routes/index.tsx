@@ -59,21 +59,14 @@ function Welcome() {
         </div>
 
         {/* Feature row */}
-        <div className="mt-10 grid grid-cols-3 gap-0">
-          <Feature icon={<Shield className="h-8 w-8" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
-          <div className="flex items-center justify-center">
-            <div className="h-14 w-px bg-white/15" />
-          </div>
-          <Feature icon={<Clock className="h-8 w-8" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} noDivider />
-        </div>
-        {/* Second row alignment — replicate 3-across with dividers */}
-        <div className="-mt-[92px] grid grid-cols-[1fr_1px_1fr_1px_1fr] items-center gap-0">
+        <div className="mt-10 grid grid-cols-[1fr_1px_1fr_1px_1fr] items-center gap-0">
           <Feature icon={<Shield className="h-8 w-8" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
           <div className="h-14 w-px bg-white/15" />
           <Feature icon={<Clock className="h-8 w-8" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} />
           <div className="h-14 w-px bg-white/15" />
           <Feature icon={<Wallet className="h-8 w-8" strokeWidth={1.75} />} label={<>AFFORDABLE<br/>FARES</>} />
         </div>
+
 
         {/* CTAs */}
         <div className="mt-auto space-y-4 pt-12">
