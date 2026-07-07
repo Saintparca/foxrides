@@ -21,8 +21,8 @@ export function haversineKm(a: { lat: number; lng: number }, b: { lat: number; l
 }
 
 // Old single-arg signature (km only) — kept for backwards compat.
-// New signature: estimateFare(km, minutes)
-export function estimateFare(km: number, minutes: number = Math.max(3, km * 2)): number {
+// New signature: estimateFare(km, minutes). Fallback assumes ~30 km/h city avg.
+export function estimateFare(km: number, minutes: number = Math.max(3, Math.round((km / 30) * 60))): number {
   const raw = BASE_FARE + km * PER_KM + minutes * PER_MIN + BOOKING_FEE;
   return Math.round(Math.max(MIN_FARE, raw) * 100) / 100;
 }
