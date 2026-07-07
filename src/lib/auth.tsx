@@ -27,24 +27,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let cancelled = false;
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+      if (cancelled) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        setTimeout(() => loadRoles(s.user.id), 0);
+        // fire-and-forget; roles refresh in background
+        loadRoles(s.user.id);
       } else {
         setRoles([]);
       }
     });
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      // await roles BEFORE clearing loading so gates don't flash
       if (data.session?.user) await loadRoles(data.session.user.id);
-      setLoading(false);
-    });
+      if (!cancelled) setLoading(false);
+    })();
 
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
