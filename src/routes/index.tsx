@@ -5,12 +5,20 @@ import foxMark from "@/assets/fox-mark.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Fox Rides — Your Ride. Your Way." },
-      { name: "description", content: "Safe, reliable and affordable rides anytime, anywhere in Botswana." },
+      { title: "Fox Rides — Book rides in Botswana | Your Ride. Your Way." },
+      { name: "description", content: "Fox Rides is Botswana's fast, safe and affordable ride-hailing app. Book a trip in seconds or drive and keep 90% of every fare." },
+      { property: "og:title", content: "Fox Rides — Book rides in Botswana" },
+      { property: "og:description", content: "Fast, safe and affordable rides across Botswana. Drivers keep 90% of every fare." },
+      { property: "og:url", content: "https://foxrides.lovable.app/" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:title", content: "Fox Rides — Book rides in Botswana" },
+      { name: "twitter:description", content: "Fast, safe and affordable rides across Botswana." },
     ],
+    links: [{ rel: "canonical", href: "https://foxrides.lovable.app/" }],
   }),
   component: Welcome,
 });
+
 
 function Welcome() {
   return (
@@ -58,14 +66,15 @@ function Welcome() {
           </p>
         </div>
 
-        {/* Feature row */}
-        <div className="mt-10 grid grid-cols-[1fr_1px_1fr_1px_1fr] items-center gap-0">
-          <Feature icon={<Shield className="h-8 w-8" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
+        {/* Feature row — grid keeps 3 items + dividers from overflowing on small phones */}
+        <div className="mt-10 grid grid-cols-[minmax(0,1fr)_1px_minmax(0,1fr)_1px_minmax(0,1fr)] items-center gap-x-2">
+          <Feature icon={<Shield className="h-7 w-7" strokeWidth={1.75} />} label={<>SAFE &<br/>SECURE</>} />
           <div className="h-14 w-px bg-white/15" />
-          <Feature icon={<Clock className="h-8 w-8" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} />
+          <Feature icon={<Clock className="h-7 w-7" strokeWidth={1.75} />} label={<>FAST &<br/>RELIABLE</>} />
           <div className="h-14 w-px bg-white/15" />
-          <Feature icon={<Wallet className="h-8 w-8" strokeWidth={1.75} />} label={<>AFFORDABLE<br/>FARES</>} />
+          <Feature icon={<Wallet className="h-7 w-7" strokeWidth={1.75} />} label={<>AFFORDABLE<br/>FARES</>} />
         </div>
+
 
 
         {/* CTAs */}
