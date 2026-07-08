@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DriverOnboardingRouteImport } from './routes/driver-onboarding'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AdminInfoRouteImport } from './routes/admin-info'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSavedPlacesRouteImport } from './routes/_authenticated/saved-places'
@@ -35,11 +34,6 @@ const DriverOnboardingRoute = DriverOnboardingRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminInfoRoute = AdminInfoRouteImport.update({
-  id: '/admin-info',
-  path: '/admin-info',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -118,7 +112,6 @@ const AuthenticatedAdminAnalyticsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -136,7 +129,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/app': typeof AuthenticatedAppRoute
@@ -155,7 +147,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/admin-info': typeof AdminInfoRoute
   '/auth': typeof AuthRoute
   '/driver-onboarding': typeof DriverOnboardingRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
@@ -175,7 +166,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin-info'
     | '/auth'
     | '/driver-onboarding'
     | '/admin'
@@ -193,7 +183,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin-info'
     | '/auth'
     | '/driver-onboarding'
     | '/app'
@@ -211,7 +200,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/admin-info'
     | '/auth'
     | '/driver-onboarding'
     | '/_authenticated/admin'
@@ -231,7 +219,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AdminInfoRoute: typeof AdminInfoRoute
   AuthRoute: typeof AuthRoute
   DriverOnboardingRoute: typeof DriverOnboardingRoute
 }
@@ -250,13 +237,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-info': {
-      id: '/admin-info'
-      path: '/admin-info'
-      fullPath: '/admin-info'
-      preLoaderRoute: typeof AdminInfoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -405,20 +385,9 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AdminInfoRoute: AdminInfoRoute,
   AuthRoute: AuthRoute,
   DriverOnboardingRoute: DriverOnboardingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

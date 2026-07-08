@@ -19,24 +19,31 @@ export const listAllUsers = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }, { data: drivers, error: dErr }, authList] =
+    // Paginate through all auth users (listUsers caps at ~1000 per page)
+    const perPage = 1000;
+    const emailById = new Map<string, string>();
+    const bannedById = new Map<string, boolean>();
+    for (let page = 1; page <= 50; page++) {
+      const { data: authPage, error: aErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+      if (aErr) throw new Error(aErr.message);
+      const users = authPage?.users ?? [];
+      for (const u of users) {
+        emailById.set(u.id, u.email ?? "");
+        const until = (u as any).banned_until;
+        bannedById.set(u.id, !!until && new Date(until).getTime() > Date.now());
+      }
+      if (users.length < perPage) break;
+    }
+
+    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }, { data: drivers, error: dErr }] =
       await Promise.all([
         supabaseAdmin.from("profiles").select("id, full_name, phone, is_active, created_at"),
         supabaseAdmin.from("user_roles").select("user_id, role"),
         supabaseAdmin.from("drivers").select("id, vehicle_make, vehicle_model, vehicle_plate, is_approved, activation_paid"),
-        supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
       ]);
     if (pErr) throw new Error(pErr.message);
     if (rErr) throw new Error(rErr.message);
     if (dErr) throw new Error(dErr.message);
-
-    const emailById = new Map<string, string>();
-    const bannedById = new Map<string, boolean>();
-    for (const u of authList.data?.users ?? []) {
-      emailById.set(u.id, u.email ?? "");
-      const until = (u as any).banned_until;
-      bannedById.set(u.id, !!until && new Date(until).getTime() > Date.now());
-    }
 
     const rolesById = new Map<string, string[]>();
     for (const r of roles ?? []) {
