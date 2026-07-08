@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Pt = { lat: number; lng: number };
 
 export const computeRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
     const ok = (p: any) =>
       p && typeof p.lat === "number" && typeof p.lng === "number" &&
