@@ -373,6 +373,37 @@ function BookingPanel({ userId }: { userId: string }) {
         </div>
       </div>
 
+      {/* Vehicle tier selector — Fastest / Economy / Comfort */}
+      <div className="grid grid-cols-3 gap-2">
+        {([
+          { id: "fastest", label: "Fastest", eta: Math.max(3, min ? min - 2 : 5) },
+          { id: "economy", label: "Economy", eta: min || 5 },
+          { id: "comfort", label: "Comfort", eta: (min || 5) + 2 },
+        ] as { id: RideClass; label: string; eta: number }[]).map((tier) => {
+          const active = rideClass === tier.id;
+          const price = km ? estimateFare(km, min, tier.id) : 0;
+          return (
+            <button
+              key={tier.id}
+              type="button"
+              onClick={() => setRideClass(tier.id)}
+              className={`flex flex-col items-center gap-1 rounded-2xl border p-3 text-center transition ${
+                active
+                  ? "border-fox bg-fox/10 shadow-[var(--shadow-card)]"
+                  : "border-border bg-card opacity-70"
+              }`}
+            >
+              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-fox text-fox-foreground" : "bg-muted text-muted-foreground"}`}>
+                {tier.eta} min
+              </span>
+              <Car className={`h-6 w-6 ${active ? "text-fox" : "text-muted-foreground"}`} />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{tier.label}</span>
+              <span className="text-sm font-black">{price ? `P ${price.toFixed(0)}` : "—"}</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-2xl bg-gradient-ink p-5 text-background">
         <div className="flex items-center justify-between">
           <div>
