@@ -180,6 +180,7 @@ function BookingPanel({ userId }: { userId: string }) {
   const [route, setRoute] = useState<{ km: number; min: number; polyline: string } | null>(null);
   const [routing, setRouting] = useState(false);
   const [saved, setSaved] = useState<any[]>([]);
+  const [rideClass, setRideClass] = useState<RideClass>("economy");
   const compute = useServerFn(computeRoute);
   const seq = useRef(0);
 
