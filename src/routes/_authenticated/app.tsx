@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { estimateFare, fmtMoney, haversineKm, CANCEL_FEE } from "@/lib/fare";
+import { estimateFare, fmtMoney, haversineKm, CANCEL_FEE, type RideClass } from "@/lib/fare";
 import { computeRoute } from "@/lib/routes.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -180,6 +180,7 @@ function BookingPanel({ userId }: { userId: string }) {
   const [route, setRoute] = useState<{ km: number; min: number; polyline: string } | null>(null);
   const [routing, setRouting] = useState(false);
   const [saved, setSaved] = useState<any[]>([]);
+  const [rideClass, setRideClass] = useState<RideClass>("economy");
   const compute = useServerFn(computeRoute);
   const seq = useRef(0);
 
@@ -227,7 +228,7 @@ function BookingPanel({ userId }: { userId: string }) {
 
   const km = route?.km ?? 0;
   const min = route?.min ?? 0;
-  const fare = km ? estimateFare(km, min) : 0;
+  const fare = km ? estimateFare(km, min, rideClass) : 0;
 
   const pickSaved = (p: any) => {
     setDest({ address: p.address, lat: Number(p.lat), lng: Number(p.lng) });
@@ -262,6 +263,7 @@ function BookingPanel({ userId }: { userId: string }) {
       duration_min: min, eta_at: eta,
       scheduled_at: scheduledIso,
       stops: stopsPayload,
+      ride_class: rideClass,
     } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
@@ -369,6 +371,37 @@ function BookingPanel({ userId }: { userId: string }) {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Vehicle tier selector — Fastest / Economy / Comfort */}
+      <div className="grid grid-cols-3 gap-2">
+        {([
+          { id: "fastest", label: "Fastest", eta: Math.max(3, min ? min - 2 : 5) },
+          { id: "economy", label: "Economy", eta: min || 5 },
+          { id: "comfort", label: "Comfort", eta: (min || 5) + 2 },
+        ] as { id: RideClass; label: string; eta: number }[]).map((tier) => {
+          const active = rideClass === tier.id;
+          const price = km ? estimateFare(km, min, tier.id) : 0;
+          return (
+            <button
+              key={tier.id}
+              type="button"
+              onClick={() => setRideClass(tier.id)}
+              className={`flex flex-col items-center gap-1 rounded-2xl border p-3 text-center transition ${
+                active
+                  ? "border-fox bg-fox/10 shadow-[var(--shadow-card)]"
+                  : "border-border bg-card opacity-70"
+              }`}
+            >
+              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${active ? "bg-fox text-fox-foreground" : "bg-muted text-muted-foreground"}`}>
+                {tier.eta} min
+              </span>
+              <Car className={`h-6 w-6 ${active ? "text-fox" : "text-muted-foreground"}`} />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{tier.label}</span>
+              <span className="text-sm font-black">{price ? `P ${price.toFixed(0)}` : "—"}</span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="rounded-2xl bg-gradient-ink p-5 text-background">

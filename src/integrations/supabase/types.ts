@@ -19,6 +19,7 @@ export type Database = {
           activation_fee: number
           base_fare: number
           cancel_fee: number
+          comfort_multiplier: number
           driver_share: number
           id: boolean
           min_fare: number
@@ -31,6 +32,7 @@ export type Database = {
           activation_fee?: number
           base_fare?: number
           cancel_fee?: number
+          comfort_multiplier?: number
           driver_share?: number
           id?: boolean
           min_fare?: number
@@ -43,6 +45,7 @@ export type Database = {
           activation_fee?: number
           base_fare?: number
           cancel_fee?: number
+          comfort_multiplier?: number
           driver_share?: number
           id?: boolean
           min_fare?: number
@@ -272,6 +275,7 @@ export type Database = {
           pickup_lng: number | null
           rating: number | null
           rating_comment: string | null
+          ride_class: string
           route_polyline: string | null
           scheduled_at: string | null
           status: Database["public"]["Enums"]["ride_status"]
@@ -300,6 +304,7 @@ export type Database = {
           pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
+          ride_class?: string
           route_polyline?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]
@@ -328,6 +333,7 @@ export type Database = {
           pickup_lng?: number | null
           rating?: number | null
           rating_comment?: string | null
+          ride_class?: string
           route_polyline?: string | null
           scheduled_at?: string | null
           status?: Database["public"]["Enums"]["ride_status"]

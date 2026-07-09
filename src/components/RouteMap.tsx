@@ -68,7 +68,7 @@ export function RouteMap({
     const path = polyline ? decodePolyline(polyline) : (pickup && destination ? [pickup, destination] : []);
     if (path.length >= 2) {
       lineRef.current = new g.maps.Polyline({
-        path, map, strokeColor: "#f08a3c", strokeOpacity: 0.95, strokeWeight: 5,
+        path, map, strokeColor: "#22c55e", strokeOpacity: 1, strokeWeight: 6,
       });
       const b = new g.maps.LatLngBounds();
       path.forEach((p) => b.extend(p));
