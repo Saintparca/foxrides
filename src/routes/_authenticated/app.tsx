@@ -263,6 +263,7 @@ function BookingPanel({ userId }: { userId: string }) {
       duration_min: min, eta_at: eta,
       scheduled_at: scheduledIso,
       stops: stopsPayload,
+      ride_class: rideClass,
     } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
