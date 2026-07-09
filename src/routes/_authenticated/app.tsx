@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
-import { estimateFare, fmtMoney, haversineKm, CANCEL_FEE } from "@/lib/fare";
+import { estimateFare, fmtMoney, haversineKm, CANCEL_FEE, type RideClass } from "@/lib/fare";
 import { computeRoute } from "@/lib/routes.functions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
