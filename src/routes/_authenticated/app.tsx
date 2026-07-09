@@ -228,7 +228,7 @@ function BookingPanel({ userId }: { userId: string }) {
 
   const km = route?.km ?? 0;
   const min = route?.min ?? 0;
-  const fare = km ? estimateFare(km, min) : 0;
+  const fare = km ? estimateFare(km, min, rideClass) : 0;
 
   const pickSaved = (p: any) => {
     setDest({ address: p.address, lat: Number(p.lat), lng: Number(p.lng) });
