@@ -41,9 +41,9 @@ function Layout() {
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2">
           <NavItem to="/app" icon={<Home className="h-5 w-5" />} label="Home" active={path === "/app"} />
-          <NavItem to="/app/history" icon={<History className="h-5 w-5" />} label="Trips" active={path.startsWith("/app/history")} />
-          {isDriver && <NavItem to="/app/earnings" icon={<DollarSign className="h-5 w-5" />} label="Earnings" active={path.startsWith("/app/earnings")} />}
-          {isAdmin && <NavItem to="/app/admin" icon={<Shield className="h-5 w-5" />} label="Admin" active={path.startsWith("/app/admin")} />}
+          <NavItem to="/history" icon={<History className="h-5 w-5" />} label="Trips" active={path.startsWith("/history")} />
+          {isDriver && <NavItem to="/earnings" icon={<DollarSign className="h-5 w-5" />} label="Earnings" active={path.startsWith("/earnings")} />}
+          {isAdmin && <NavItem to="/admin" icon={<Shield className="h-5 w-5" />} label="Admin" active={path.startsWith("/admin")} />}
         </div>
       </nav>
     </div>
