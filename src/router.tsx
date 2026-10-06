@@ -17,7 +17,7 @@ function DefaultNotFound() {
   );
 }
 
-function DefaultError({ error, reset }: { error: Error; reset: () => void }) {
+function DefaultError({ error, reset }: import("@tanstack/react-router").ErrorComponentProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
