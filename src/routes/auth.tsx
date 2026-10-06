@@ -18,13 +18,17 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-// Normalize BW phone to E.164 (+267XXXXXXXX). Accepts local 8-digit or 267 prefixed.
-function normalizePhoneE164(raw: string): string | null {
+// Normalize BW phone to local 8+ digits (strip 267 prefix).
+function normalizePhone(raw: string): string | null {
   const digits = raw.replace(/\D/g, "");
   const local = digits.startsWith("267") ? digits.slice(3) : digits;
   if (local.length < 7 || local.length > 12) return null;
-  return `+267${local}`;
+  return local;
 }
+
+// Phone-based credentials: no SMS or email verification required.
+const emailFor = (local: string) => `${local}@foxrides.app`;
+const passwordFor = (local: string) => `fxr-${local}-rides`;
 
 function AuthPage() {
   const sp = Route.useSearch();
@@ -32,12 +36,9 @@ function AuthPage() {
   const [role, setRole] = useState<"customer" | "driver">(sp.role ?? "customer");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [step, setStep] = useState<"details" | "otp">("details");
-  const [phoneE164, setPhoneE164] = useState<string>("");
   const [busy, setBusy] = useState(false);
 
-  const sendOtp = async (e: React.FormEvent) => {
+  const continueWithPhone = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
@@ -47,48 +48,35 @@ function AuthPage() {
       }).safeParse({ name, phone });
       if (!parse.success) { toast.error(parse.error.issues[0].message); return; }
 
-      const e164 = normalizePhoneE164(parse.data.phone);
-      if (!e164) { toast.error("Enter a valid Botswana phone number"); return; }
+      const local = normalizePhone(parse.data.phone);
+      if (!local) { toast.error("Enter a valid Botswana phone number"); return; }
 
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: e164,
-        options: {
-          channel: "sms",
-          data: { full_name: parse.data.name, phone: e164.replace("+267", ""), role },
-        },
-      });
-      if (error) {
-        toast.error(
-          error.message.includes("provider")
-            ? "SMS provider not configured. Ask the admin to enable phone auth."
-            : error.message
-        );
-        return;
+      const email = emailFor(local);
+      const password = passwordFor(local);
+
+      // Try sign-in first; if the account doesn't exist yet, create it.
+      const signIn = await supabase.auth.signInWithPassword({ email, password });
+      if (signIn.error) {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: parse.data.name, phone: local, role },
+          },
+        });
+        if (signUpError) {
+          toast.error(
+            signUpError.message.includes("already registered")
+              ? "This number is already registered. Please use the name you signed up with."
+              : signUpError.message
+          );
+          return;
+        }
+        toast.success(`Welcome to Fox Rides, ${parse.data.name.split(" ")[0]}!`);
+      } else {
+        toast.success(`Welcome back, ${parse.data.name.split(" ")[0]}!`);
       }
-      setPhoneE164(e164);
-      setStep("otp");
-      toast.success("We sent you a 6-digit code by SMS");
-    } finally {
-      setBusy(false);
-    }
-  };
 
-  const verifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      const parse = z.object({ otp: z.string().trim().regex(/^\d{4,8}$/, "Enter the code from your SMS") })
-        .safeParse({ otp });
-      if (!parse.success) { toast.error(parse.error.issues[0].message); return; }
-
-      const { error } = await supabase.auth.verifyOtp({
-        phone: phoneE164,
-        token: parse.data.otp,
-        type: "sms",
-      });
-      if (error) { toast.error(error.message); return; }
-
-      toast.success(`Welcome, ${name.split(" ")[0]}!`);
       if (role === "driver") navigate({ to: "/driver-onboarding" });
       else navigate({ to: "/app" });
     } finally {
@@ -106,69 +94,46 @@ function AuthPage() {
         <div className="mt-10">
           <h1 className="text-3xl font-black tracking-tight">Welcome to Fox Rides</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {step === "details"
-              ? "We'll text you a code to confirm your number."
-              : `Enter the 6-digit code sent to ${phoneE164}.`}
+            Just your name and phone number — no codes, no waiting.
           </p>
         </div>
 
-        {step === "details" && (
-          <>
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              {(["customer", "driver"] as const).map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRole(r)}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    role === r
-                      ? "border-primary bg-accent shadow-[var(--shadow-fox)]"
-                      : "border-border hover:bg-accent"
-                  }`}
-                >
-                  <div className="text-sm font-bold capitalize">
-                    {r === "customer" ? "Rider" : "Driver"}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {r === "customer" ? "Book rides" : "Earn driving"}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <form onSubmit={sendOtp} className="mt-6 space-y-4">
-              <Field label="Full name">
-                <Input value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Kabo Mokoena" required maxLength={80} />
-              </Field>
-              <Field label="Phone number">
-                <Input type="tel" inputMode="tel" value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="75 123 456" required maxLength={20} />
-              </Field>
-              <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base font-bold">
-                {busy ? "Sending code…" : "Send SMS code"}
-              </Button>
-            </form>
-          </>
-        )}
-
-        {step === "otp" && (
-          <form onSubmit={verifyOtp} className="mt-6 space-y-4">
-            <Field label="6-digit code">
-              <Input type="text" inputMode="numeric" value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))}
-                placeholder="123456" required autoFocus />
-            </Field>
-            <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base font-bold">
-              {busy ? "Verifying…" : "Verify & continue"}
-            </Button>
-            <button type="button" onClick={() => { setStep("details"); setOtp(""); }}
-              className="w-full text-center text-xs font-semibold text-muted-foreground underline">
-              Use a different number
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          {(["customer", "driver"] as const).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRole(r)}
+              className={`rounded-xl border p-3 text-left transition ${
+                role === r
+                  ? "border-primary bg-accent shadow-[var(--shadow-fox)]"
+                  : "border-border hover:bg-accent"
+              }`}
+            >
+              <div className="text-sm font-bold capitalize">
+                {r === "customer" ? "Rider" : "Driver"}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {r === "customer" ? "Book rides" : "Earn driving"}
+              </div>
             </button>
-          </form>
-        )}
+          ))}
+        </div>
+
+        <form onSubmit={continueWithPhone} className="mt-6 space-y-4">
+          <Field label="Full name">
+            <Input value={name} onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Kabo Mokoena" required maxLength={80} />
+          </Field>
+          <Field label="Phone number">
+            <Input type="tel" inputMode="tel" value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="75 123 456" required maxLength={20} />
+          </Field>
+          <Button type="submit" disabled={busy} className="h-12 w-full rounded-full text-base font-bold">
+            {busy ? "Please wait…" : "Continue"}
+          </Button>
+        </form>
 
         <p className="mt-auto pt-8 text-center text-xs text-muted-foreground">
           By continuing you agree to Fox Rides' terms.
