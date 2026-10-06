@@ -22,7 +22,7 @@ export function DriverActionsBar({
   const intl = normalizeBwIntl(driverPhone);
 
   const share = async () => {
-    const url = typeof window !== "undefined" ? `${window.location.origin}/app/history` : "";
+    const url = typeof window !== "undefined" ? `${window.location.origin}/history` : "";
     const text = `I'm on a Fox Rides trip from ${ride.pickup_address} to ${ride.destination_address}. Track: ${url}`;
     if (navigator.share) {
       try { await navigator.share({ title: "My Fox Rides trip", text, url }); } catch {}

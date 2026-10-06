@@ -22,12 +22,12 @@ function AdminLayout() {
   }
 
   const tabs = [
-    { to: "/app/admin", label: "Dashboard", active: path === "/app/admin" },
-    { to: "/app/admin/users", label: "Users", active: path.startsWith("/app/admin/users") },
-    { to: "/app/admin/live", label: "Live map", active: path.startsWith("/app/admin/live") },
-    { to: "/app/admin/fares", label: "Fares", active: path.startsWith("/app/admin/fares") },
-    { to: "/app/admin/promos", label: "Promos", active: path.startsWith("/app/admin/promos") },
-    { to: "/app/admin/analytics", label: "Analytics", active: path.startsWith("/app/admin/analytics") },
+    { to: "/admin", label: "Dashboard", active: path === "/admin" },
+    { to: "/admin/users", label: "Users", active: path.startsWith("/admin/users") },
+    { to: "/admin/live", label: "Live map", active: path.startsWith("/admin/live") },
+    { to: "/admin/fares", label: "Fares", active: path.startsWith("/admin/fares") },
+    { to: "/admin/promos", label: "Promos", active: path.startsWith("/admin/promos") },
+    { to: "/admin/analytics", label: "Analytics", active: path.startsWith("/admin/analytics") },
   ];
 
   return (

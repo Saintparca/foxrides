@@ -301,7 +301,7 @@ function BookingPanel({ userId }: { userId: string }) {
             <Star className="h-3.5 w-3.5" /> {f.label}
           </button>
         ))}
-        <Link to="/app/saved-places" className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-bold text-muted-foreground">
+        <Link to="/saved-places" className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-bold text-muted-foreground">
           <Plus className="h-3.5 w-3.5" /> {t("manage")}
         </Link>
       </div>
@@ -426,7 +426,7 @@ function BookingPanel({ userId }: { userId: string }) {
         {busy ? t("requesting") : scheduledAt ? t("schedule_fox") : t("request_fox")}
       </Button>
 
-      <Link to="/app/history" className="block text-center text-sm font-semibold text-primary hover:underline">{t("view_history")} →</Link>
+      <Link to="/history" className="block text-center text-sm font-semibold text-primary hover:underline">{t("view_history")} →</Link>
     </div>
   );
 
