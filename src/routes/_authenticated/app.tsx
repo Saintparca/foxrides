@@ -45,7 +45,9 @@ function AppHome() {
         </div>
       </div>
 
-      {isDriver ? <DriverPanel userId={user!.id} /> : <CustomerPanel userId={user!.id} />}
+      {!user ? (
+        <div className="py-10 text-center text-sm text-muted-foreground">Loading…</div>
+      ) : isDriver ? <DriverPanel userId={user.id} /> : <CustomerPanel userId={user.id} />}
     </div>
   );
 }
@@ -77,7 +79,7 @@ function CustomerPanel({ userId }: { userId: string }) {
   }, [userId]);
 
   if (activeRide) return <ActiveRideCard ride={activeRide} onChange={loadActive} />;
-  return <BookingPanel userId={userId} />;
+  return <BookingPanel userId={userId} onBooked={loadActive} />;
 }
 
 function ActiveRideCard({ ride, onChange }: { ride: any; onChange: () => void }) {
@@ -168,7 +170,7 @@ function ActiveRideCard({ ride, onChange }: { ride: any; onChange: () => void })
   );
 }
 
-function BookingPanel({ userId }: { userId: string }) {
+function BookingPanel({ userId, onBooked }: { userId: string; onBooked: () => void }) {
   const { t } = useI18n();
   const [pickup, setPickup] = useState<PlacePick | null>(null);
   const [dest, setDest] = useState<PlacePick | null>(null);
@@ -239,7 +241,9 @@ function BookingPanel({ userId }: { userId: string }) {
   const removeStop = (i: number) => setStops(stops.filter((_, idx) => idx !== i));
 
   const book = async () => {
-    if (!pickup || !dest || !route) { toast.error("Pick both pickup and destination"); return; }
+    if (!pickup) { toast.error("Choose your pickup from the suggestions list (or allow location access)"); return; }
+    if (!dest) { toast.error("Choose your destination from the suggestions list"); return; }
+    if (!route) { toast.error("Still calculating your route — try again in a second"); return; }
     setBusy(true);
     const scheduledIso = scheduledAt ? new Date(scheduledAt).toISOString() : null;
     if (scheduledIso && new Date(scheduledIso).getTime() < Date.now() + 5 * 60 * 1000) {
@@ -268,6 +272,7 @@ function BookingPanel({ userId }: { userId: string }) {
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success(scheduledIso ? "Ride scheduled!" : "Ride requested! A driver will accept shortly.");
+    onBooked();
   };
 
   const home = saved.find(s => s.kind === "home");
@@ -422,7 +427,7 @@ function BookingPanel({ userId }: { userId: string }) {
         </div>
       </div>
 
-      <Button onClick={book} disabled={busy || !pickup || !dest || !route} className="h-14 w-full rounded-full text-base font-bold shadow-[var(--shadow-fox)]">
+      <Button onClick={book} disabled={busy} className="h-14 w-full rounded-full text-base font-bold shadow-[var(--shadow-fox)]">
         {busy ? t("requesting") : scheduledAt ? t("schedule_fox") : t("request_fox")}
       </Button>
 
