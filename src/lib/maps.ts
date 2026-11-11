@@ -25,4 +25,4 @@ export function loadGoogleMaps(): Promise<any> {
 }
 
 // Gaborone, Botswana
-export const BW_CENTER = { lat: -24.6282, lng: 25.9231 };
+export const BW_CENTER = { lat: -22.3875, lng: 26.7108 }; // Serowe
