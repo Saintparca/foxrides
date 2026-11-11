@@ -6,7 +6,7 @@ type Pt = { lat: number; lng: number };
 
 export const computeRoute = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
+  .validator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
     const pt = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
     return z.object({ origin: pt, destination: pt, intermediates: z.array(pt).max(10).optional() }).parse(d);
   })

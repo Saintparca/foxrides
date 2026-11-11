@@ -70,7 +70,7 @@ export const listAllUsers = createServerFn({ method: "GET" })
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; role: "customer" | "driver" | "admin"; grant: boolean }) =>
+  .validator((d: { userId: string; role: "customer" | "driver" | "admin"; grant: boolean }) =>
     z.object({ userId: z.string().uuid(), role: roleEnum, grant: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -97,7 +97,7 @@ export const setUserRole = createServerFn({ method: "POST" })
 
 export const setUserActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; active: boolean }) =>
+  .validator((d: { userId: string; active: boolean }) =>
     z.object({ userId: z.string().uuid(), active: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
