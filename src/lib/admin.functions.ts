@@ -5,10 +5,14 @@ import { z } from "zod";
 const roleEnum = z.enum(["customer", "driver", "admin"]);
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
+  // Read the caller's own role through RLS. The private has_role function is
+  // intentionally not exposed through the API.
+  const { data, error } = await ctx.supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", ctx.userId)
+    .eq("role", "admin")
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden");
 }
