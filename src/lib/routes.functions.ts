@@ -1,3 +1,4 @@
+import { inSerowe } from "@/lib/serowe";
 import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -11,6 +12,9 @@ export const computeRoute = createServerFn({ method: "POST" })
     return z.object({ origin: pt, destination: pt, intermediates: z.array(pt).max(10).optional() }).parse(d);
   })
   .handler(async ({ data }) => {
+    if (![data.origin, data.destination, ...(data.intermediates ?? [])].every(inSerowe)) {
+      return { ok: false as const, error: "Fox Rides only operates in Serowe", distanceKm: 0, durationMin: 0, polyline: "" };
+    }
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
     const GMAPS = process.env.GOOGLE_MAPS_API_KEY;
     if (!LOVABLE_API_KEY || !GMAPS) {

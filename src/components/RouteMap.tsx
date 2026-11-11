@@ -1,3 +1,4 @@
+import { SEROWE_CENTER, SEROWE_BOUNDS } from "@/lib/serowe";
 import { useEffect, useRef } from "react";
 import { BW_CENTER, loadGoogleMaps } from "@/lib/maps";
 import { decodePolyline } from "@/lib/fare";
@@ -28,12 +29,15 @@ export function RouteMap({
     loadGoogleMaps().then((g) => {
       if (!alive || !ref.current) return;
       mapRef.current = new g.maps.Map(ref.current, {
-        center: pickup || destination || BW_CENTER,
-        zoom: 12,
+        center: pickup || destination || SEROWE_CENTER,
+        zoom: 14,
+        minZoom: 12,
+        clickableIcons: false,
+        restriction: { latLngBounds: SEROWE_BOUNDS, strictBounds: false },
         disableDefaultUI: true,
         zoomControl: true,
         gestureHandling: "greedy",
-        styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
+        styles: [{ featureType: "poi.business", elementType: "labels.icon", stylers: [{ visibility: "simplified" }] }],
       });
       draw();
     }).catch(() => {});

@@ -1,3 +1,4 @@
+import { inSerowe } from "@/lib/serowe";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -196,6 +197,7 @@ function BookingPanel({ userId, onBooked }: { userId: string; onBooked: () => vo
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { address: "Current location", lat: pos.coords.latitude, lng: pos.coords.longitude };
+        if (!inSerowe(p)) { toast.message("Fox Rides operates in Serowe only — pick your pickup in Serowe"); return; }
         setPickup(p); setPickupText(p.address);
       },
       () => {},
@@ -243,6 +245,7 @@ function BookingPanel({ userId, onBooked }: { userId: string; onBooked: () => vo
   const book = async () => {
     if (!pickup) { toast.error("Choose your pickup from the suggestions list (or allow location access)"); return; }
     if (!dest) { toast.error("Choose your destination from the suggestions list"); return; }
+    if (!inSerowe(pickup) || !inSerowe(dest) || stops.some(s => s.pick && !inSerowe(s.pick))) { toast.error("Pickup, stops and drop-off must all be in Serowe"); return; }
     if (!route) { toast.error("Still calculating your route — try again in a second"); return; }
     setBusy(true);
     const scheduledIso = scheduledAt ? new Date(scheduledAt).toISOString() : null;
