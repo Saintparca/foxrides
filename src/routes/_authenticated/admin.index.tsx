@@ -19,20 +19,22 @@ function AdminIndex() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   const load = async () => {
-    const [{ count: users }, { count: dCount }, { data: rideRows }, { data: dRows }, { data: wRows }] = await Promise.all([
+    const [{ count: users }, { count: dCount }, { data: rideRows }, { data: dRows }, { data: wRows }, { data: profileRows }] = await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }),
       supabase.from("drivers").select("*", { count: "exact", head: true }),
       supabase.from("rides").select("*").order("created_at", { ascending: false }).limit(50),
-      supabase.from("drivers").select("*, profiles!inner(full_name, phone)").order("created_at", { ascending: false }),
-      supabase.from("withdrawals").select("*, profiles:driver_id(full_name, phone)").order("created_at", { ascending: false }).limit(30),
+      supabase.from("drivers").select("*").order("created_at", { ascending: false }),
+      supabase.from("withdrawals").select("*").order("created_at", { ascending: false }).limit(30),
+      supabase.from("profiles").select("id, full_name, phone"),
     ]);
     const revenue = (rideRows ?? []).filter((r) => r.status === "completed").reduce((s, r) => s + Number(r.fare), 0);
+    const profilesById = new Map((profileRows ?? []).map((p) => [p.id, p]));
     setStats({ users: users ?? 0, drivers: dCount ?? 0, rides: rideRows?.length ?? 0, revenue });
     setRides(rideRows ?? []);
-    const all = dRows ?? [];
+    const all = (dRows ?? []).map((d) => ({ ...d, profiles: profilesById.get(d.id) }));
     setPendingDrivers(all.filter((d: any) => (d.approval_status ?? (d.is_approved ? "approved" : "pending")) !== "approved"));
     setApprovedDrivers(all.filter((d: any) => (d.approval_status ?? (d.is_approved ? "approved" : "pending")) === "approved"));
-    setWithdrawals(wRows ?? []);
+    setWithdrawals((wRows ?? []).map((w) => ({ ...w, profiles: profilesById.get(w.driver_id) })));
   };
   useEffect(() => { load(); }, []);
 
