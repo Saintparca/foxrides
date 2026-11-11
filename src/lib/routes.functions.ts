@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -5,13 +6,9 @@ type Pt = { lat: number; lng: number };
 
 export const computeRoute = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
-    const ok = (p: any) =>
-      p && typeof p.lat === "number" && typeof p.lng === "number" &&
-      p.lat >= -90 && p.lat <= 90 && p.lng >= -180 && p.lng <= 180;
-    if (!ok(d?.origin) || !ok(d?.destination)) throw new Error("Invalid coordinates");
-    if (d.intermediates && d.intermediates.some((p) => !ok(p))) throw new Error("Invalid stop coordinates");
-    return d;
+  .validator((d: { origin: Pt; destination: Pt; intermediates?: Pt[] }) => {
+    const pt = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180) });
+    return z.object({ origin: pt, destination: pt, intermediates: z.array(pt).max(10).optional() }).parse(d);
   })
   .handler(async ({ data }) => {
     const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
