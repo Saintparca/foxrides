@@ -64,7 +64,7 @@ function AdminLive() {
     loadGoogleMaps().then((g) => {
       if (!alive || !mapEl.current) return;
       mapRef.current = new g.maps.Map(mapEl.current, {
-        center: BW_CENTER, zoom: 12, disableDefaultUI: true, zoomControl: true, gestureHandling: "greedy",
+        center: BW_CENTER, zoom: 13, disableDefaultUI: true, zoomControl: true, gestureHandling: "greedy",
         styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
       });
     }).catch(() => {});

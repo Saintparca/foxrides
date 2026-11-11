@@ -16,7 +16,7 @@ export function loadGoogleMaps(): Promise<any> {
       return;
     }
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&libraries=places,marker&callback=__foxInitMaps${ch ? `&channel=${ch}` : ""}`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&language=en&region=BW&callback=__foxInitMaps${ch ? `&channel=${ch}` : ""}`;
     s.async = true;
     s.onerror = () => reject(new Error("Failed to load Google Maps"));
     document.head.appendChild(s);
@@ -25,4 +25,4 @@ export function loadGoogleMaps(): Promise<any> {
 }
 
 // Gaborone, Botswana
-export const BW_CENTER = { lat: -24.6282, lng: 25.9231 };
+export const BW_CENTER = { lat: -22.3875, lng: 26.7108 }; // Serowe

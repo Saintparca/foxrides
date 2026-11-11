@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { loadGoogleMaps } from "@/lib/maps";
+import { searchSerowePlaces, getSerowePlace } from "@/lib/places.functions";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 export interface PlacePick {
@@ -20,62 +21,34 @@ export function PlaceAutocomplete({
   onTextChange?: (s: string) => void;
 }) {
   const [input, setInput] = useState(value);
-  const [suggs, setSuggs] = useState<any[]>([]);
+  const [suggs, setSuggs] = useState<{ placeId: string; text: string }[]>([]);
   const [open, setOpen] = useState(false);
-  const tokenRef = useRef<any>(null);
-  const placesRef = useRef<any>(null);
+  const tokenRef = useRef<string>(crypto.randomUUID());
   const timer = useRef<any>(null);
+  const seq = useRef(0);
 
   useEffect(() => { setInput(value); }, [value]);
-
-  useEffect(() => {
-    let alive = true;
-    loadGoogleMaps()
-      .then((g) => g.maps.importLibrary("places"))
-      .then((places: any) => {
-        if (!alive) return;
-        placesRef.current = places;
-        tokenRef.current = new places.AutocompleteSessionToken();
-      })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   const query = (text: string) => {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(async () => {
-      const places = placesRef.current;
-      if (!places || text.trim().length < 2) { setSuggs([]); return; }
+      if (text.trim().length < 2) { setSuggs([]); return; }
+      const n = ++seq.current;
       try {
-        const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: text,
-          sessionToken: tokenRef.current,
-          includedRegionCodes: ["bw"],
-        });
-        setSuggs(suggestions ?? []);
-        setOpen(true);
-      } catch {
-        setSuggs([]);
-      }
-    }, 220);
+        const r = await searchSerowePlaces({ data: { input: text, sessionToken: tokenRef.current } });
+        if (n !== seq.current) return;
+        setSuggs(r); setOpen(true);
+      } catch { setSuggs([]); }
+    }, 300);
   };
 
-  const choose = async (s: any) => {
+  const choose = async (s: { placeId: string; text: string }) => {
     try {
-      const place = s.placePrediction.toPlace();
-      await place.fetchFields({ fields: ["location", "formattedAddress", "displayName"] });
-      const loc = place.location;
-      const addr = place.formattedAddress || s.placePrediction.text.text;
-      const pick = { address: addr, lat: loc.lat(), lng: loc.lng() };
-      setInput(addr);
-      setOpen(false);
-      setSuggs([]);
-      // Fresh token after a selection
-      tokenRef.current = new placesRef.current.AutocompleteSessionToken();
+      const pick = await getSerowePlace({ data: { placeId: s.placeId, sessionToken: tokenRef.current } });
+      tokenRef.current = crypto.randomUUID();
+      setInput(pick.address); setOpen(false); setSuggs([]);
       onPick(pick);
-    } catch (e) {
-      // ignore
-    }
+    } catch (e: any) { toast.error(e?.message ?? "Could not load that place"); }
   };
 
   return (
@@ -95,8 +68,8 @@ export function PlaceAutocomplete({
       />
       {open && suggs.length > 0 && (
         <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-64 overflow-auto rounded-xl border border-border bg-card shadow-lg">
-          {suggs.slice(0, 6).map((s, i) => {
-            const t = s.placePrediction?.text?.text ?? "";
+          {suggs.slice(0, 8).map((s, i) => {
+            const t = s.text;
             return (
               <button
                 key={i}
